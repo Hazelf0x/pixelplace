@@ -20,8 +20,9 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.mjs --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\"",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist || echo \"(types emit skipped)\"",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.mjs --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\"",
+    "build:types": "tsc -p tsconfig.build.json",
     "test": "node test/smoke.mjs"
   },
   "dependencies": {

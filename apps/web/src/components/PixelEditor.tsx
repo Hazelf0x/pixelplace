@@ -33,6 +33,17 @@ export default function PixelEditor({ initialSource }: { initialSource: string }
   const [saveError, setSaveError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // AI authoring state. `aiSource` is the exact source Claude returned; while the
+  // editor still matches it, the post is provably AI-authored. The moment a human
+  // edits it, it becomes a human (or collaborative) post — honest provenance.
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiSource, setAiSource] = useState<string | null>(null)
+  const [aiInfo, setAiInfo] = useState<{ attempts: number; model: string } | null>(null)
+
+  const isAiAuthored = aiSource !== null && source === aiSource
+
   const render = useCallback(async (src: string) => {
     setRendering(true)
     try {
@@ -61,14 +72,48 @@ export default function PixelEditor({ initialSource }: { initialSource: string }
 
   const canSave = result?.ok === true && !saving
 
+  const handleAiDraw = async () => {
+    const prompt = aiPrompt.trim()
+    if (!prompt || aiBusy) return
+    setAiBusy(true)
+    setAiError(null)
+    setAiInfo(null)
+    try {
+      const res = await fetch('/api/ai-draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        setAiError(data?.error ?? `Claude couldn't make valid pixel art (${data?.attempts ?? '?'} tries)`)
+        return
+      }
+      // Load Claude's source into the editor; live preview re-renders from it.
+      setSource(data.source)
+      setAiSource(data.source)
+      setAiInfo({ attempts: data.attempts, model: data.model })
+    } catch {
+      setAiError('Network error talking to the AI endpoint')
+    } finally {
+      setAiBusy(false)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setSaveError(null)
+    const authorType = isAiAuthored ? 'ai' : 'human'
     try {
       const res = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source, title: title.trim() || 'untitled' })
+        body: JSON.stringify({
+          source,
+          title: title.trim() || 'untitled',
+          authorType,
+          author: isAiAuthored ? `Claude (${aiInfo?.model ?? 'ai'})` : 'anon'
+        })
       })
       const data = await res.json()
       if (!res.ok || !data.ok) {
@@ -95,6 +140,31 @@ export default function PixelEditor({ initialSource }: { initialSource: string }
       </div>
 
       <div className="side">
+        <div className="card">
+          <h3>Ask AI to draw</h3>
+          <div className="save-row">
+            <input
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAiDraw() }}
+              placeholder="e.g. a sleepy orange cat"
+              disabled={aiBusy}
+            />
+            <button className="btn primary" disabled={aiBusy || aiPrompt.trim().length === 0} onClick={handleAiDraw}>
+              {aiBusy ? 'Drawing…' : 'Generate'}
+            </button>
+          </div>
+          {aiInfo ? (
+            <div className="all-good" style={{ marginTop: 8 }}>
+              ✓ Drawn by {aiInfo.model} in {aiInfo.attempts} {aiInfo.attempts === 1 ? 'try' : 'tries'} — edit it below to make it yours.
+            </div>
+          ) : null}
+          {aiError ? <div className="diag error" style={{ marginTop: 8 }}>{aiError}</div> : null}
+          <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 8 }}>
+            Claude writes PixelCraft, then fixes its own compiler errors until it renders.
+          </div>
+        </div>
+
         <div className="card">
           <h3>Preview {rendering ? '· rendering…' : ''}</h3>
           <div className="preview-wrap">
@@ -143,7 +213,7 @@ export default function PixelEditor({ initialSource }: { initialSource: string }
         </div>
 
         <div className="card">
-          <h3>Post it</h3>
+          <h3>Post it {isAiAuthored ? <span className="tag ai">AI</span> : null}</h3>
           <div className="save-row">
             <input
               value={title}

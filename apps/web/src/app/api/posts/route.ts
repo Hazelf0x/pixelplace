@@ -8,7 +8,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  let body: { source?: string; title?: string; author?: string }
+  let body: { source?: string; title?: string; author?: string; authorType?: string }
   try {
     body = await req.json()
   } catch {
@@ -19,11 +19,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'source is required' }, { status: 400 })
   }
 
+  // Only honor an explicit 'ai' tag; anything else is treated as human-authored.
+  const authorType = body.authorType === 'ai' ? 'ai' : 'human'
+
   const result = await savePost({
     source: body.source,
     title: body.title,
     author: body.author,
-    authorType: 'human'
+    authorType
   })
 
   if (!result.ok) {

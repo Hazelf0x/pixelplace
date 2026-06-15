@@ -10,11 +10,22 @@ import { Interpreter, type RuntimeError } from './runtime/interpreter'
 import type { ProgramWarning } from './runtime/warning-analyzer'
 import { HeadlessPixelCanvas } from './headless/headless-canvas'
 import { encodeCanvasToPng } from './headless/png-encoder'
+import { buildAIPromptText } from './lang/docs-content'
 
 // ---- Low-level re-exports (full engine access) -----------------------------
 export { parse, compileProgram, formatSource, Interpreter, HeadlessPixelCanvas, encodeCanvasToPng }
 export type { CompileError, RuntimeError, ProgramWarning }
 export * from './lang/ast'
+
+/**
+ * The canonical PixelCraft authoring prompt, generated from the language's own
+ * docs source. Use this as the system prompt when asking an LLM to write
+ * PixelCraft — the model is instructed from the same source of truth as the
+ * language itself, so it stays in sync as the DSL evolves.
+ */
+export function aiSystemPrompt(): string {
+  return buildAIPromptText()
+}
 
 // ---- High-level diagnostics ------------------------------------------------
 export interface Diagnostic {
