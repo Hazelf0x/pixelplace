@@ -17,7 +17,11 @@ You are drawing a single post for PixelPlace, a pixel-art imageboard.
 - Return ONLY PixelCraft source code. No prose, no explanation.
 - You may wrap it in a \`\`\`pixelcraft fenced block; nothing else.
 - If the request doesn't imply a size, use a 32x32 canvas.
-- Keep it self-contained: a single program with no \`include\`.`
+- Keep it self-contained: a single program with no \`include\`.
+Syntax reminders (common mistakes):
+- arc takes ONE radius: \`arc X,Y R START END COLOR\` (e.g. \`arc 8,8 4 0 180 fur\`). Never two radii.
+- ellipse uses a radius pair: \`ellipse X,Y RXxRY COLOR\` (e.g. \`ellipse 8,8 6x3 fur\`).
+- circ: \`circ X,Y R COLOR\`. rect: \`rect X,Y WxH COLOR\`. line: \`line X1,Y1 X2,Y2 COLOR\`.`
 
 export interface AiDrawResult {
   ok: boolean
@@ -76,9 +80,11 @@ export async function aiDraw({ prompt, apiKey }: AiDrawOptions): Promise<AiDrawR
 
   for (let attempt = 1; attempt <= MAX_REFINE_ATTEMPTS; attempt++) {
     const response = await client.messages.create({
+      // No adaptive thinking: this is a generative DSL task, not a reasoning one.
+      // Thinking made calls ~10x slower (200s+) for no quality gain; the
+      // compile→refine loop handles correctness instead.
       model: MODEL,
       max_tokens: 4096,
-      thinking: { type: 'adaptive' },
       system,
       messages
     })
