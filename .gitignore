@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-cli/
+.next/
+out/
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+/tmp/
+*.local.png
+.data/
