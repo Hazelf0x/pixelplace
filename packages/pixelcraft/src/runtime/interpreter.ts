@@ -970,6 +970,19 @@ export class Interpreter {
     this.ensureVariableScope()
   }
 
+  /**
+   * Observer notified after each top-level statement finishes. This is what makes
+   * replay possible: a PixelCraft program is a recipe, and an observer can render
+   * the canvas between ingredients. Survives resetState so it can be installed once
+   * before execute().
+   */
+  private stepObserver: ((node: ASTNode) => void) | null = null
+
+  /** Install (or clear, with null) the per-statement observer. */
+  setStepObserver(observer: ((node: ASTNode) => void) | null): void {
+    this.stepObserver = observer
+  }
+
   private executePreambleNodes(nodes: ASTNode[]): void {
     for (const stmt of nodes) {
       if (this.drawBudgetExceeded) break
@@ -977,6 +990,13 @@ export class Interpreter {
         this.executeNode(stmt)
       } catch (e) {
         this.addRuntimeError('R026', String(e), stmt.pos.line, stmt.pos.column, stmt.pos.filePath)
+      }
+      if (this.stepObserver) {
+        // Drawing accumulates in layers; the canvas is only ever written by
+        // compositing. Flatten so the observer sees the picture as it stands,
+        // then hand it the statement that produced it.
+        this.compositeLayersToCanvas()
+        this.stepObserver(stmt)
       }
     }
   }
@@ -988,6 +1008,13 @@ export class Interpreter {
         this.executeNode(stmt)
       } catch (e) {
         this.addRuntimeError('R026', String(e), stmt.pos.line, stmt.pos.column, stmt.pos.filePath)
+      }
+      if (this.stepObserver) {
+        // Drawing accumulates in layers; the canvas is only ever written by
+        // compositing. Flatten so the observer sees the picture as it stands,
+        // then hand it the statement that produced it.
+        this.compositeLayersToCanvas()
+        this.stepObserver(stmt)
       }
     }
   }

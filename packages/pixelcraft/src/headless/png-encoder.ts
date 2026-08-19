@@ -1,5 +1,5 @@
-import { parseHexColorLiteral } from '../lang/hex-color'
 import { HeadlessPixelCanvas } from './headless-canvas'
+import { canvasToRgba } from './rgba'
 
 declare const require: {
   (name: string): unknown
@@ -14,33 +14,15 @@ const PNG_SIGNATURE = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10])
 export function encodeCanvasToPng(canvas: HeadlessPixelCanvas, scale = 1): Uint8Array {
   const safeScale = Math.max(1, Math.floor(scale))
   const { width, height } = canvas.getSize()
-  const outWidth = width * safeScale
-  const outHeight = height * safeScale
-  const palette = canvas.getPalette()
-  const rgba = new Uint8Array(outWidth * outHeight * 4)
+  return encodeRgbaToPng(canvasToRgba(canvas, safeScale), width * safeScale, height * safeScale)
+}
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const color = canvas.getPixel(x, y)
-      const hex = color
-        ? color.type === 'index'
-          ? palette[Number(color.value)] ?? '#000000'
-          : String(color.value)
-        : '#000000'
-      const parsed = parseHexColorLiteral(hex) ?? [0, 0, 0, 255]
-
-      for (let sy = 0; sy < safeScale; sy++) {
-        for (let sx = 0; sx < safeScale; sx++) {
-          const outIndex = ((y * safeScale + sy) * outWidth + (x * safeScale + sx)) * 4
-          rgba[outIndex] = parsed[0]
-          rgba[outIndex + 1] = parsed[1]
-          rgba[outIndex + 2] = parsed[2]
-          rgba[outIndex + 3] = parsed[3]
-        }
-      }
-    }
-  }
-
+/**
+ * Encode a raw RGBA buffer as a PNG. Separate from the canvas path because a
+ * sprite sheet is several canvases tiled into one image — there is no single
+ * canvas to hand over.
+ */
+export function encodeRgbaToPng(rgba: Uint8Array, outWidth: number, outHeight: number): Uint8Array {
   const scanlines = new Uint8Array((outWidth * 4 + 1) * outHeight)
   for (let y = 0; y < outHeight; y++) {
     const rowStart = y * (outWidth * 4 + 1)
