@@ -431,6 +431,12 @@ function validateSymbolUsages(
         validatePairUsageSymbols(node.dx, node.dy, scopeId, 'repeat step', node.pos)
         for (const child of node.body) visit(child)
         return
+      case 'offset':
+        validatePairUsageSymbols(node.dx, node.dy, scopeId, 'offset pair', node.pos)
+        return
+      case 'fade':
+        validateScalarValue(node.factor, scopeId, 'fade factor', node.pos)
+        return
       case 'group':
         if (node.pivot) {
           validatePairUsageSymbols(node.pivot.x, node.pivot.y, scopeId, `group "${node.name}" pivot`, node.pos)
@@ -611,6 +617,9 @@ function validatePairContexts(
           }
         }
         for (const child of node.body) visit(child)
+        return
+      case 'offset':
+        validatePair('offset pair', node.dx, node.dy, scopeId, node.pos)
         return
       case 'group':
         if (node.pivot) {

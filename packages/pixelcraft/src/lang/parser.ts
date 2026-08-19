@@ -4,7 +4,7 @@ import {
   LineNode, CircleNode, ArcNode, Color, ParseError, ParseErrorCode, MirrorNode, MirrorAxis,
   GroupNode, StampNode, RepeatNode, PolygonNode, FillNode, FrameNode, Point,
   PaletteEntry, AnchorNode, BitmapNode, FontNode, FontGlyphNode, ColorNode, CursorNode, TileNode, TilesetNode, TilemapNode, MapNode,
-  OutlineLineNode, OutlineRectNode, OutlineCircleNode, OutlinePolygonNode, LayerNode, ClearNode, PushNode, PopNode,
+  OutlineLineNode, OutlineRectNode, OutlineCircleNode, OutlinePolygonNode, LayerNode, ClearNode, FadeNode, PushNode, PopNode,
   ConstNode, DefPointNode,
   Expr, ScalarValue, LetNode, LetPointNode, LetPairNode, ScatterNode, EmitNode, GlowNode, EllipseNode, OutlineEllipseNode, DitherNode, SourceSpan, TextNode, TextAlign, BoxNode, BoxPointSelector
 } from './ast'
@@ -112,6 +112,8 @@ export class Parser {
     with: () => this.parseWith(),
     push: () => this.parsePush(),
     pop: () => this.parsePop(),
+    offset: () => this.parseOffsetScope(),
+    fade: () => this.parseFade(),
     orect: () => this.parseOutlineRect(),
     ocirc: () => this.parseOutlineCircle(),
     opoly: () => this.parseOutlinePolygon(),
@@ -2514,9 +2516,13 @@ export class Parser {
 
     this.skipNewlines()
     let clearBeforeBody = false
+    let fadeBeforeBody: ScalarValue | undefined
     if (this.check('KEYWORD') && this.peek().value === 'clear') {
       this.advance()
       clearBeforeBody = true
+    } else if (this.check('KEYWORD') && this.peek().value === 'fade') {
+      this.advance()
+      fadeBeforeBody = this.parseRequiredScalar('Expected fade factor between 0 and 1 after fade')
     }
 
     this.skipNewlines()
@@ -2531,9 +2537,54 @@ export class Parser {
     if (clearBeforeBody) {
       expanded.push({ kind: 'clear', layerName: undefined, color: undefined, pos })
     }
+    if (fadeBeforeBody !== undefined) {
+      expanded.push({ kind: 'fade', layerName: undefined, factor: fadeBeforeBody, pos })
+    }
     expanded.push(...body)
     expanded.push({ kind: 'pop', pos })
     return expanded
+  }
+
+  private parseFade(): FadeNode {
+    const pos = { line: this.peek().line, column: this.peek().column }
+    this.advance() // consume 'fade'
+
+    let layerName: string | undefined
+    if (this.check('KEYWORD') && this.peek().value === 'layer') {
+      this.advance() // consume 'layer'
+      const nameToken = this.expect('STRING', 'Expected layer name like "trail"')
+      layerName = nameToken.value
+      if (layerName.length === 0) {
+        this.addError('Layer name cannot be empty', nameToken)
+      }
+    }
+
+    const factor = this.parseRequiredScalar('Expected fade factor between 0 and 1 after fade')
+    return { kind: 'fade', layerName, factor, pos }
+  }
+
+  private parseOffsetScope(): ASTNode[] {
+    const pos = { line: this.peek().line, column: this.peek().column }
+    this.advance() // consume 'offset'
+
+    const pair = this.tryParsePointOffset()
+    if (!pair) {
+      this.addError('Expected offset pair like 2,-1, +2,-1, or ($dx),($dy) after offset', this.peek())
+      throw new Error('Expected offset pair after offset')
+    }
+
+    this.skipNewlines()
+    this.expect('LBRACE', 'Expected { after offset pair')
+    const body = this.parseBlock()
+
+    // Desugar like `with`: push/pop scope the translation, the leaf offset
+    // node adds to the current offset so nested blocks compose.
+    return [
+      { kind: 'push', pos },
+      { kind: 'offset', dx: pair.x, dy: pair.y, pos },
+      ...body,
+      { kind: 'pop', pos }
+    ]
   }
 
   private parseClear(): ClearNode {

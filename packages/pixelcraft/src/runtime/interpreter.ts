@@ -1949,6 +1949,10 @@ export class Interpreter {
         this.executeClear(node.layerName, node.color)
         break
 
+      case 'fade':
+        this.executeFade(node.layerName, node.factor)
+        break
+
       case 'push':
         this.executePush()
         break
@@ -1956,6 +1960,13 @@ export class Interpreter {
       case 'pop':
         this.executePop()
         break
+
+      case 'offset': {
+        const pair = this.evaluatePairValues(node.dx, node.dy, 'offset dx', 'offset dy')
+        this.offsetX += Math.trunc(pair.width)
+        this.offsetY += Math.trunc(pair.height)
+        break
+      }
 
       case 'cursor': {
         const resolved = this.resolvePoint(node.point)
@@ -2257,6 +2268,47 @@ export class Interpreter {
     const resolved = this.resolveColor(color)
     this.currentColor = resolved
     this.hasCurrentColor = true
+  }
+
+  private executeFade(layerName: string | undefined, factor: ScalarValue): void {
+    const targetLayerName = layerName ?? this.activeLayerName
+    const layer = this.ensureLayer(targetLayerName)
+    const layerTraces = this.getLayerTraces(targetLayerName)
+    const clampedFactor = this.evaluateUnitScalar(factor, 'fade factor')
+
+    if (clampedFactor >= 1 || layer.size === 0) return
+
+    if (clampedFactor <= 0) {
+      const changed = this.clearLayerWithBudget(layer, layerTraces)
+      if (changed) {
+        this.invalidateFlattenedPixelTraces()
+      }
+      return
+    }
+
+    const keys = Array.from(layer.keys())
+    let mutated = false
+    for (const key of keys) {
+      if (this.consumeDrawBudgetUnits(1) === 0) break
+      const color = layer.get(key)
+      if (!color) continue
+
+      const [r, g, b, a] = this.resolvedColorToRgba(color)
+      // Floor so repeated fades deterministically reach zero instead of
+      // oscillating at alpha 1 forever.
+      const fadedAlpha = Math.floor(a * clampedFactor)
+      if (fadedAlpha <= 0) {
+        layer.delete(key)
+        layerTraces.delete(key)
+      } else {
+        layer.set(key, this.rgbaToResolvedColor(r, g, b, fadedAlpha))
+      }
+      mutated = true
+    }
+
+    if (mutated) {
+      this.invalidateFlattenedPixelTraces()
+    }
   }
 
   private executeClear(layerName: string | undefined, color: Color | undefined): void {

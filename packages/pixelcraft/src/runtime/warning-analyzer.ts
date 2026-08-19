@@ -206,8 +206,17 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
     const visitFrameNode = (node: ASTNode): void => {
       switch (node.kind) {
         case 'repeat':
+          // Repeat offsets are not expanded by this lightweight analyzer, so
+          // its complete drawing bounds are not statically known here.
+          unresolvedGeometry = true
           signatureParts.push(`repeat(${node.body.length})`)
           for (const stmt of node.body) visitFrameNode(stmt)
+          return
+        case 'offset':
+          // A runtime offset translates every following sibling draw until the
+          // enclosing pop, so static bounds are no longer known here.
+          unresolvedGeometry = true
+          signatureParts.push('offset')
           return
         case 'pixel': {
           drawCommands++
@@ -422,6 +431,10 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
         case 'clear':
           drawCommands++
           signatureParts.push('clear')
+          return
+        case 'fade':
+          drawCommands++
+          signatureParts.push('fade')
           return
         case 'text':
           drawCommands++
@@ -797,6 +810,7 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
 
       const hasUniformStaticBbox =
         frameNodes.length >= 4 &&
+        !hasAnyEmit &&
         frameMetrics.every((entry) => entry.metrics.bbox !== null && !entry.metrics.hasUnresolvedGeometry) &&
         (() => {
           const first = frameMetrics[0].metrics.bbox!

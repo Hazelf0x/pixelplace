@@ -46,6 +46,8 @@ export const STATEMENT_COMMANDS = [
   'with',
   'push',
   'pop',
+  'offset',
+  'fade',
   'orect',
   'ocirc',
   'opoly',
@@ -149,6 +151,8 @@ export const COMMAND_COORDINATE_CAPABILITIES: Readonly<Record<StatementCommand, 
   with: NO_COORDINATES,
   push: NO_COORDINATES,
   pop: NO_COORDINATES,
+  offset: NO_COORDINATES,
+  fade: NO_COORDINATES,
 
   anchor: {
     absolute: true,

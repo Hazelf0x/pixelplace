@@ -431,6 +431,10 @@ export function lowerSemanticProgram(resolved: ResolvedProgram): Program {
         const pair = rewritePairComponents(node.dx, node.dy, scopeId)
         return { ...node, dx: pair.width, dy: pair.height }
       }
+      case 'offset': {
+        const pair = rewritePairComponents(node.dx, node.dy, scopeId)
+        return { ...node, dx: pair.width, dy: pair.height }
+      }
       case 'letpair':
       case 'letvec':
       case 'letsz': {

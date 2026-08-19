@@ -537,6 +537,26 @@ export interface PushNode {
   pos: Position
 }
 
+// Multiplies the alpha of every pixel already on a layer by a 0..1 factor
+// (floor rounding, so repeated fades deterministically reach zero and the
+// pixel is removed). Targets the active layer unless layerName is given.
+export interface FadeNode {
+  kind: 'fade'
+  layerName?: string
+  factor: ScalarValue
+  pos: Position
+}
+
+// Leaf statement that adds (dx, dy) to the current drawing offset. The
+// `offset X,Y { ... }` block form desugars to push + offset + body + pop,
+// so nested blocks compose and restore automatically.
+export interface OffsetNode {
+  kind: 'offset'
+  dx: ScalarValue
+  dy: ScalarValue
+  pos: Position
+}
+
 export interface PopNode {
   kind: 'pop'
   pos: Position
@@ -697,8 +717,10 @@ export type ASTNode =
   | TextNode
   | LayerNode
   | ClearNode
+  | FadeNode
   | PushNode
   | PopNode
+  | OffsetNode
   | OutlineRectNode
   | OutlineCircleNode
   | OutlinePolygonNode

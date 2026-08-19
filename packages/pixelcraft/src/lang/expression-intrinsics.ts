@@ -5,6 +5,7 @@ export const EXPRESSION_INTRINSICS = [
   'min',
   'max',
   'abs',
+  'pow',
   'step',
   'smoothstep',
   'sin01',
@@ -76,6 +77,13 @@ const EXPRESSION_INTRINSIC_DEFINITIONS: Readonly<Record<ExpressionIntrinsicName,
   abs: {
     arity: 1,
     evaluate: (args) => Math.abs(args[0])
+  },
+  pow: {
+    arity: 2,
+    // Undefined cases (negative base with a fractional exponent, 0 to a negative
+    // power) return non-finite values and are caught by the shared non-finite
+    // expression guard, which reports a runtime diagnostic and falls back to 0.
+    evaluate: (args) => Math.pow(args[0], args[1])
   },
   step: {
     arity: 2,

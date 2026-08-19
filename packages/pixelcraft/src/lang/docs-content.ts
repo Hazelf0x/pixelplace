@@ -96,6 +96,18 @@ export const DOCS_REFERENCE_ROWS: Readonly<{
       exampleCode: 'with layer "fx" clear { glow center 6 aura }'
     },
     {
+      commandKey: 'fade',
+      commandCode: 'fade [layer "name"] FACTOR',
+      descriptionHtml: 'Multiply the alpha of everything already on a layer by FACTOR (0..1); repeated fades make trails and afterimages that deterministically dissolve',
+      exampleCode: 'with layer "trail" fade 0.8 { px ($x),($y) spark }'
+    },
+    {
+      commandKey: 'offset',
+      commandCode: 'offset DX,DY { ... }',
+      descriptionHtml: 'Scoped translation block: shifts all drawing inside by (DX, DY); expressions allowed, nested blocks compose',
+      exampleCode: 'offset ($sway),($bob) { px 4,4 ink line 0,0 8,8 ink }'
+    },
+    {
       commandKey: 'clear',
       commandCode: 'clear [COLOR|layer "name" [COLOR]]',
       descriptionHtml: 'Clear/fill active or named layer',
@@ -402,6 +414,7 @@ const AI_COMPOSITION_COMMANDS: readonly StatementCommand[] = [
   'cursor',
   'mirror',
   'with',
+  'offset',
   'group',
   'bitmap',
   'stamp',
@@ -462,9 +475,10 @@ export function buildAIPromptText(): string {
     '# Declaration names cannot reuse reserved keywords (e.g. avoid "drift"; use driftVec/delta).',
     'px ($size + 2, $size - 1) 1    # reference with $name',
     'rect (2 + $size),(1 + $size) 4x2 1  # per-axis wrapped expressions stay absolute',
-    'ellipse 8,8 ($size) x ($size + 2) 1 # sizes/radii from expressions need an explicit x',
+    'oellipse 16,16 (2 + $r) x (1 + $r / 2) ink  # size/radii slots accept expressions: (expr) x (expr) works everywhere WxH does, so shapes can grow per frame',
     '# A lone size is square: rect 4,4 6 1 draws 6x6. So write "(a) x (b)" - never "(a) (b)".',
-    '# Supports + - * / % and parentheses, decimals, plus lerp(a,b,t), ease_in_out(t), clamp(x,lo,hi), min(a,b), max(a,b), abs(x), step(edge,x), smoothstep(edge0,edge1,x), sin01(t), cos01(t), and noise01(x,y,seed).',
+    '# Supports + - * / % and parentheses, decimals, plus lerp(a,b,t), ease_in_out(t), clamp(x,lo,hi), min(a,b), max(a,b), abs(x), pow(base,exp), step(edge,x), smoothstep(edge0,edge1,x), sin01(t), cos01(t), and noise01(x,y,seed).',
+    '# pow is the one to reach for with repeat: pow(1.5, $i) gives self-similar (exponential) spacing, so zooms, perspective ladders and log spirals fall out of a single loop.',
     '# Canvas built-ins: $width, $height, $centerX, $centerY. $i is available in repeat.',
     '',
     'Drawing commands (all accept palette index, #hex, or named color):',
@@ -511,7 +525,9 @@ export function buildAIPromptText(): string {
     '',
     'Layers and state:',
     'layer "name"     # create/switch layer (first created = back)',
-    'with layer "name" [clear] { ... }  # scoped layer block',
+    'with layer "name" [clear | fade F] { ... }  # scoped layer block; clear wipes, fade F multiplies existing alpha by F (0..1) for trails/afterimages',
+    'fade [layer "name"] F  # standalone form of the same fade',
+    'offset DX,DY { ... }  # scoped translation: shifts all drawing inside by (DX, DY); expressions allowed, so one animated offset can move a whole cluster',
     'push             # save state (mirror, cursor, offset, color, layer)',
     'pop              # restore state',
     '',

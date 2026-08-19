@@ -14,6 +14,7 @@
     "build:mcp": "npm run build -w @pixelplace/mcp-server",
     "build": "npm run build:pixelcraft && npm run build:mcp",
     "test:mcp": "npm run test -w @pixelplace/mcp-server",
-    "test": "npm run test:pixelcraft && npm run test:mcp"
+    "test": "npm run test:pixelcraft && npm run test:conformance && npm run test:mcp",
+    "test:conformance": "npm run test:conformance -w @pixelplace/pixelcraft"
   }
 }

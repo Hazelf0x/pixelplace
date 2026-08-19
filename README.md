@@ -65,9 +65,27 @@ back, so it can judge whether the drawing is right rather than merely whether it
 ```bash
 npm install                          # install workspace deps
 npm run build                        # build the engine + the MCP server
-npm test                             # engine smoke test + MCP protocol smoke test
+npm test                             # smoke + conformance + MCP protocol tests
 npm run dev -w @pixelplace/web       # run the app (http://localhost:3000)
 ```
+
+### Staying in step with CodingArt
+
+`packages/pixelcraft` is a *copy* of `CodingArt/src/{lang,runtime}`, taken on the
+assumption that the semantics were frozen. They were not: upstream later grew `pow`,
+`offset` and `fade`, and its two newest showcase programs silently stopped compiling
+here. Nothing noticed, because nothing was checking.
+
+`npm run test:conformance` now checks. It renders all 58 upstream examples, reproduces
+two of their reference PNGs **byte for byte**, and reports any upstream line that has
+no counterpart here. Point it elsewhere with `PIXELCRAFT_UPSTREAM`; it skips cleanly
+when upstream is absent.
+
+One divergence is deliberate and declared in the test: both codebases independently
+found that `W014` fired on expression-driven animation, and fixed it differently.
+Upstream falls silent whenever geometry is dynamic. This engine binds the frame
+built-ins and *evaluates* the expressions, so the warning still fires on frames that
+genuinely do not move.
 
 ## Roadmap
 
