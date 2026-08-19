@@ -108,8 +108,13 @@ server.registerTool(
       return textOnly(`Compiles, but fails at runtime.${formatDiagnostics('Errors', rendered.errors)}`, true)
     }
 
-    const used = extractUsedColors(source, { frame: frame ?? 0 })
+    // Both of these read every frame; `frame` only selects which one the
+    // per-frame coverage figure describes. Saying so matters: "5 colors painted,
+    // 0% coverage" looks self-contradictory until you know the two lines are
+    // measuring different things.
+    const used = extractUsedColors(source)
     const coverage = measureCoverage(source, { frame: frame ?? 0 })
+    const animated = rendered.hasAnimation
 
     return textOnly(
       [
@@ -117,9 +122,12 @@ server.registerTool(
         `Canvas: ${rendered.width}x${rendered.height}`,
         rendered.hasAnimation ? `Frames: ${rendered.frameCount}` : 'Frames: still',
         `Declared palette (${rendered.palette.length}): ${rendered.palette.join(' ')}`,
-        `Colors painted (${used.length}): ${used.join(' ')}`,
-        `Coverage: ${Math.round(coverage.ratio * 100)}% of the canvas ` +
+        `Colors painted (${used.length}${animated ? ', across all frames' : ''}): ${used.join(' ')}`,
+        `Coverage${animated ? ` of frame ${frame ?? 0}` : ''}: ${Math.round(coverage.ratio * 100)}% of the canvas ` +
           `(${coverage.painted}/${coverage.total} pixels). Unpainted pixels are transparent.`,
+        animated && coverage.maxRatio !== coverage.ratio
+          ? `Fullest frame covers ${Math.round(coverage.maxRatio * 100)}% of the canvas.`
+          : '',
         formatDiagnostics('Warnings', rendered.warnings)
       ]
         .filter(Boolean)

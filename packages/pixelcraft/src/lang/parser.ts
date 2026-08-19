@@ -3034,6 +3034,20 @@ export class Parser {
         }
       }
 
+      // A bare expression is a square size (8 means 8x8), but a color can never be
+      // "(" or "$name" - so a second expression here is a dropped "x" separator, not
+      // a square followed by a color. Say that, and take the height anyway: otherwise
+      // the real color parses as the height and the next command reports the baffling
+      // "Unknown command: <colorName>" a token later.
+      if (sepToken.type === 'LPAREN' || sepToken.type === 'VAR') {
+        this.addError(
+          'Expected "x" between the two size expressions. Write "(a) x (b)", not "(a) (b)".',
+          sepToken
+        )
+        const height = this.parseScalarExpression()
+        return { width, height }
+      }
+
       return { width, height: width }
     }
 

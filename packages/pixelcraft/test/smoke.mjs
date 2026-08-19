@@ -233,5 +233,84 @@ ok(
 )
 ok(renderSetSheet([], {}).ok === false, 'an empty set is not a sheet')
 
+// 11) W014 ("frames show no movement") must judge expression-driven animation.
+// It used to do the exact opposite: every $frame-driven coordinate failed to
+// evaluate statically and dropped out of the frame's bounding box, so the
+// best-written animations were the ones warned at, and the hint told them to do
+// what they were already doing.
+const w014 = (src) => renderSource(src).warnings.some((w) => w.code === 'W014')
+
+const movingTimeline = `canvas 32x32
+pal sky=#1b2b3a ball=#f0c060
+timeline 0..7 {
+  each {
+    rect 0,0 32x32 sky
+    circ (2 + $frame * 4), 16 3 ball
+  }
+}`
+const movingViaLet = `canvas 32x32
+pal a=#3a6ea5 b=#26496e
+group "leg" { rect 0,0 3x5 b }
+timeline 0..7 {
+  each {
+    let swing = ((sin01($localT) - 0.5) * 6)
+    stamp "leg" at (11 + $swing),18
+    rect 11,11 9x8 a
+  }
+}`
+const stillFrames = `canvas 32x32
+pal sky=#1b2b3a ball=#f0c060
+frame 0 { rect 0,0 32x32 sky
+ circ 16,16 3 ball }
+frame 1 { rect 0,0 32x32 sky
+ circ 16,16 3 ball }
+frame 2 { rect 0,0 32x32 sky
+ circ 16,16 3 ball }
+frame 3 { rect 0,0 32x32 sky
+ circ 16,16 3 ball }`
+const stillDespiteFrameVar = `canvas 32x32
+pal sky=#1b2b3a c=#f0c060
+frames 0..7 {
+  rect 0,0 32x32 sky
+  circ (16 + $frame * 0), 16 3 c
+}`
+
+ok(!w014(movingTimeline), 'a timeline moving a shape by $frame is not warned at')
+ok(!w014(movingViaLet), 'motion through a let bound to $localT is not warned at')
+ok(w014(stillFrames), 'genuinely motionless frames are still warned at')
+ok(w014(stillDespiteFrameVar), 'motionless frames are caught even when they reference $frame')
+
+// 12) A size pair built from expressions needs an explicit x. Without the
+// separator the color parsed as the height and the *next* line reported
+// "Unknown command: <colorName>", pointing nowhere near the real mistake.
+const missingSeparator = validateSource('canvas 16x16\npal a=#ff0000\nlet r = 3\nellipse 8,8 ($r + 1) ($r - 1) a\n')
+ok(!missingSeparator.ok, 'a size pair missing its x separator is rejected')
+ok(
+  missingSeparator.errors.length === 1 && /Expected "x" between/.test(missingSeparator.errors[0].message),
+  `the one error names the missing separator (got ${JSON.stringify(missingSeparator.errors.map((e) => e.message))})`
+)
+ok(
+  validateSource('canvas 16x16\npal a=#ff0000\nlet r = 3\nellipse 8,8 ($r + 1) x ($r - 1) a\n').ok,
+  'the separated form still compiles'
+)
+ok(validateSource('canvas 16x16\npal a=#ff0000\nrect 2,2 4 a\n').ok, 'a lone size is still a square')
+ok(validateSource('canvas 16x16\npal a=#ff0000\nrect 2,2 4 0\n').ok, 'a lone size then an index color is unambiguous')
+
+// 13) Coverage has to hold across every frame. Members may animate, so reading
+// frame 0 alone let a program that is a solid block for the rest of its loop
+// through the gate that exists to catch exactly that.
+const blockAfterFrameZero = `canvas 16x16
+pal a=#3355ff
+frame 0 { px 0,0 a }
+frame 1 { rect 0,0 16x16 a }
+frame 2 { rect 0,0 16x16 a }
+frame 3 { rect 0,0 16x16 a }`
+const sneakyCoverage = measureCoverage(blockAfterFrameZero)
+ok(sneakyCoverage.ratio < 0.01, 'frame 0 alone looks almost empty')
+ok(sneakyCoverage.maxRatio === 1, 'but maxRatio sees the frames that fill the canvas')
+ok(sneakyCoverage.framesInspected === 4, `every frame is measured (got ${sneakyCoverage.framesInspected})`)
+ok(subject.maxRatio === subject.ratio, 'a still program reports maxRatio equal to ratio')
+
+
 console.log(failures === 0 ? '\nSMOKE PASS' : `\nSMOKE FAILED (${failures})`)
 process.exit(failures === 0 ? 0 : 1)

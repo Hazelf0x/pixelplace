@@ -214,10 +214,18 @@ export async function aiDrawSet({ prompt, count, apiKey }: AiSetOptions): Promis
             )
           }
 
-          coverage = measureCoverage(source).ratio
+          // Members may animate, so the rule has to hold on every frame. Reading
+          // frame 0 alone let a member that is a solid block for the rest of its
+          // loop straight through the gate.
+          const measured = measureCoverage(source)
+          coverage = measured.maxRatio
           if (coverage > MAX_COVERAGE) {
+            const where =
+              measured.framesInspected > 1
+                ? ` on its fullest frame (of ${measured.framesInspected})`
+                : ''
             return (
-              `Your program painted ${Math.round(coverage * 100)}% of the canvas, so it has no ` +
+              `Your program painted ${Math.round(coverage * 100)}% of the canvas${where}, so it has no ` +
               `transparent background — it reads as a solid block rather than a drawing of ` +
               `"${entry.name}".\nDraw only the subject, centred, and leave the surrounding pixels ` +
               `unpainted. Do not fill the canvas or draw a rect covering all of it.`

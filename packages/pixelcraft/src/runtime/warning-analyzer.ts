@@ -39,6 +39,17 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
   const usedAnchors = new Set<string>()
   const frameNodes: FrameNode[] = []
 
+  const canvasEnv = new Map<string, number>()
+  for (const statement of program.statements) {
+    if (statement.kind === 'canvas') {
+      canvasEnv.set('width', statement.width)
+      canvasEnv.set('height', statement.height)
+      canvasEnv.set('centerX', Math.floor(statement.width / 2))
+      canvasEnv.set('centerY', Math.floor(statement.height / 2))
+      break
+    }
+  }
+
   interface BoundingBox {
     minX: number
     minY: number
@@ -52,6 +63,12 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
     hasEmit: boolean
     signature: string
     bbox: BoundingBox | null
+    /**
+     * True when some drawing command's geometry could not be resolved statically.
+     * The frame's bbox is then only a partial picture, so nothing may be concluded
+     * from it matching another frame's.
+     */
+    hasUnresolvedGeometry: boolean
   }
 
   const addWarning = (
@@ -81,11 +98,24 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
     }
   }
 
+  /**
+   * Bindings visible to the static evaluator. Frame analysis seeds this with the
+   * canvas and frame built-ins and then with each `let`/`const` as it walks the
+   * body, so that `$frame`-driven coordinates resolve to real numbers. Without it
+   * every expression-driven shape silently drops out of the bounding box, which
+   * made a well-written animation look motionless.
+   */
+  let staticEnv = new Map<string, number>()
+  let unresolvedGeometry = false
+
   const evalStaticExpr = (expr: Expr): number | null => {
     switch (expr.kind) {
       case 'literal':
         return expr.value
-      case 'var':
+      case 'var': {
+        const bound = staticEnv.get(expr.name)
+        return bound === undefined ? null : bound
+      }
       case 'pairVar':
         return null
       case 'unary': {
@@ -117,15 +147,21 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
     }
   }
 
+  /** Resolves a geometry scalar, recording a miss so the caller's bbox is known partial. */
   const evalStaticScalar = (value: ScalarValue): number | null => {
     if (typeof value === 'number') return value
-    return evalStaticExpr(value)
+    const resolved = evalStaticExpr(value)
+    if (resolved === null) unresolvedGeometry = true
+    return resolved
   }
 
   const pointBox = (x: number, y: number): BoundingBox => ({ minX: x, minY: y, maxX: x, maxY: y })
 
   const tryStaticPoint = (point: Point): { x: number; y: number } | null => {
-    if (point.isCenter || point.isRelativeX || point.isRelativeY || point.anchorName) return null
+    if (point.isCenter || point.isRelativeX || point.isRelativeY || point.anchorName) {
+      unresolvedGeometry = true
+      return null
+    }
     const x = evalStaticScalar(point.x)
     const y = evalStaticScalar(point.y)
     if (x === null || y === null) return null
@@ -140,14 +176,27 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
     isRelativeY: boolean,
     anchorName?: string
   ): { x: number; y: number } | null => {
-    if (isCenter || isRelativeX || isRelativeY || anchorName) return null
+    if (isCenter || isRelativeX || isRelativeY || anchorName) {
+      unresolvedGeometry = true
+      return null
+    }
     const resolvedX = evalStaticScalar(x)
     const resolvedY = evalStaticScalar(y)
     if (resolvedX === null || resolvedY === null) return null
     return { x: Math.trunc(resolvedX), y: Math.trunc(resolvedY) }
   }
 
-  const analyzeFrameBody = (body: ASTNode[]): FrameMetrics => {
+  const analyzeFrameBody = (
+    body: ASTNode[],
+    frameNumber: number,
+    frameCount: number
+  ): FrameMetrics => {
+    staticEnv = new Map(canvasEnv)
+    staticEnv.set('frame', frameNumber)
+    staticEnv.set('frameNumber', frameNumber)
+    staticEnv.set('frameCount', frameCount)
+    unresolvedGeometry = false
+
     let drawCommands = 0
     let singlePixelCommands = 0
     let hasEmit = false
@@ -359,6 +408,17 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
           )
           return
         }
+        case 'let':
+        case 'const': {
+          const value = evalStaticExpr(node.value)
+          if (value === null) {
+            staticEnv.delete(node.name)
+          } else {
+            staticEnv.set(node.name, value)
+          }
+          signatureParts.push(node.kind)
+          return
+        }
         case 'clear':
           drawCommands++
           signatureParts.push('clear')
@@ -382,7 +442,8 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
       singlePixelCommands,
       hasEmit,
       signature: signatureParts.join('|'),
-      bbox
+      bbox,
+      hasUnresolvedGeometry: unresolvedGeometry
     }
   }
 
@@ -728,7 +789,7 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
     if (frameNodes.length >= 3) {
       const frameMetrics = frameNodes.map((frame) => ({
         frame,
-        metrics: analyzeFrameBody(frame.body)
+        metrics: analyzeFrameBody(frame.body, frame.frameNumber, frameNodes.length)
       }))
       const totalDrawCommands = frameMetrics.reduce((sum, entry) => sum + entry.metrics.drawCommands, 0)
       const totalSinglePixels = frameMetrics.reduce((sum, entry) => sum + entry.metrics.singlePixelCommands, 0)
@@ -736,7 +797,7 @@ export function analyzeProgramWarnings(program: Program): ProgramWarning[] {
 
       const hasUniformStaticBbox =
         frameNodes.length >= 4 &&
-        frameMetrics.every((entry) => entry.metrics.bbox !== null) &&
+        frameMetrics.every((entry) => entry.metrics.bbox !== null && !entry.metrics.hasUnresolvedGeometry) &&
         (() => {
           const first = frameMetrics[0].metrics.bbox!
           return frameMetrics.every((entry) => {

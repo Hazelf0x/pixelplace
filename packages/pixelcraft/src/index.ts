@@ -515,12 +515,23 @@ export function extractUsedColors(source: string, opts: RenderOptions = {}): str
 }
 
 export interface CoverageResult {
-  /** Pixels with any opacity, on the first rendered frame. */
+  /** Pixels with any opacity, on the inspected frame. */
   painted: number
   /** Total pixels on the canvas. */
   total: number
-  /** painted / total, 0..1. */
+  /** painted / total on the inspected frame, 0..1. */
   ratio: number
+  /**
+   * The highest ratio reached by any frame. Equal to `ratio` for a still program.
+   *
+   * This is what a rule about how much canvas a piece may cover has to read: one
+   * frame is not evidence about the others, and an animation that is a solid block
+   * for most of its loop has ignored the instruction no matter what frame 0 looks
+   * like.
+   */
+  maxRatio: number
+  /** How many frames were measured. */
+  framesInspected: number
 }
 
 /**
@@ -536,27 +547,50 @@ export function measureCoverage(source: string, opts: RenderOptions = {}): Cover
     entryPath,
     readFile: (path) => (path === entryPath ? source : null)
   })
-  const none = { painted: 0, total: 0, ratio: 0 }
+  const none = { painted: 0, total: 0, ratio: 0, maxRatio: 0, framesInspected: 0 }
   if (compiled.errors.length > 0) return none
 
   const canvas = new HeadlessPixelCanvas()
   const interpreter = new Interpreter(canvas as unknown as never)
   const analysis = interpreter.analyzeProgram(compiled.program)
 
-  const errors = analysis.hasAnimation
-    ? interpreter.execute(compiled.program, Math.max(0, Math.min(opts.frame ?? 0, analysis.frameCount - 1)))
-    : interpreter.execute(compiled.program)
-  if (errors.length > 0) return none
+  const frameCount = analysis.hasAnimation ? Math.min(analysis.frameCount, MAX_ANIMATION_FRAMES) : 1
+  const inspected = analysis.hasAnimation
+    ? Math.max(0, Math.min(opts.frame ?? 0, frameCount - 1))
+    : 0
 
-  const rgba = canvasToRgba(canvas, 1)
-  const size = canvas.getSize()
-  let painted = 0
-  for (let p = 3; p < rgba.length; p += 4) {
-    if (rgba[p] !== 0) painted++
+  const paintedOn = (frame: number): number | null => {
+    const errors = analysis.hasAnimation
+      ? interpreter.execute(compiled.program, frame)
+      : interpreter.execute(compiled.program)
+    if (errors.length > 0) return null
+
+    const rgba = canvasToRgba(canvas, 1)
+    let painted = 0
+    for (let p = 3; p < rgba.length; p += 4) {
+      if (rgba[p] !== 0) painted++
+    }
+    return painted
   }
 
+  let painted = 0
+  let maxPainted = 0
+  for (let i = 0; i < frameCount; i++) {
+    const count = paintedOn(i)
+    if (count === null) return none
+    if (i === inspected) painted = count
+    if (count > maxPainted) maxPainted = count
+  }
+
+  const size = canvas.getSize()
   const total = size.width * size.height
-  return { painted, total, ratio: total === 0 ? 0 : painted / total }
+  return {
+    painted,
+    total,
+    ratio: total === 0 ? 0 : painted / total,
+    maxRatio: total === 0 ? 0 : maxPainted / total,
+    framesInspected: frameCount
+  }
 }
 
 /** Ceiling on replay steps, so a huge program can't produce an unbounded payload. */
