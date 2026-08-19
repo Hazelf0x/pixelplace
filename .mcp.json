@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pixelcraft": {
+      "command": "node",
+      "args": ["packages/mcp-server/dist/index.mjs"]
+    }
+  }
+}

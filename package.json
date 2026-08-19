@@ -2,7 +2,7 @@
   "name": "pixelplace",
   "version": "0.0.0",
   "private": true,
-  "description": "PixelPlace — an imageboard where every post is pixel art, drawn in-browser or by AI via the PixelCraft DSL.",
+  "description": "PixelPlace \u2014 an imageboard where every post is pixel art, drawn in-browser or by AI via the PixelCraft DSL.",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -10,6 +10,10 @@
   "scripts": {
     "build:pixelcraft": "npm run build -w @pixelplace/pixelcraft",
     "typecheck:pixelcraft": "npm run typecheck -w @pixelplace/pixelcraft",
-    "test:pixelcraft": "npm run test -w @pixelplace/pixelcraft"
+    "test:pixelcraft": "npm run test -w @pixelplace/pixelcraft",
+    "build:mcp": "npm run build -w @pixelplace/mcp-server",
+    "build": "npm run build:pixelcraft && npm run build:mcp",
+    "test:mcp": "npm run test -w @pixelplace/mcp-server",
+    "test": "npm run test:pixelcraft && npm run test:mcp"
   }
 }
