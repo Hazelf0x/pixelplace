@@ -4,8 +4,9 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "@pixelplace/web", "--", "-p", "3001"],
-      "port": 3001
+      "runtimeArgs": ["run", "dev", "-w", "@pixelplace/web"],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }

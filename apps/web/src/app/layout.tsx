@@ -4,7 +4,27 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'PixelPlace',
-  description: 'An imageboard where every post is pixel art — drawn in-browser or by AI via the PixelCraft DSL.'
+  description:
+    'Pixel art that is source code. Written by hand or by Claude, compiled to exact pixels, and replayable stroke by stroke.'
+}
+
+/** The mark is itself pixel art — 8x8, drawn in SVG rects so it scales crisply. */
+function BrandMark() {
+  const on = [
+    [2, 1], [3, 1], [4, 1], [5, 1],
+    [1, 2], [6, 2],
+    [1, 3], [3, 3], [4, 3], [6, 3],
+    [1, 4], [6, 4],
+    [1, 5], [2, 5], [5, 5], [6, 5],
+    [2, 6], [3, 6], [4, 6], [5, 6]
+  ]
+  return (
+    <svg className="brand-mark" viewBox="0 0 8 8" aria-hidden="true">
+      {on.map(([x, y], i) => (
+        <rect key={i} x={x} y={y} width="1" height="1" fill={y < 4 ? '#ef7d57' : '#67d7ff'} />
+      ))}
+    </svg>
+  )
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -13,11 +33,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <header className="topbar">
           <Link href="/" className="brand">
-            Pixel<span>Place</span>
+            <BrandMark />
+            <span>Pixel<em>Place</em></span>
           </Link>
+          <Link href="/" className="navlink">Gallery</Link>
+          <Link href="/sets/new" className="navlink">New set</Link>
           <div className="spacer" />
-          <Link href="/" className="btn">Feed</Link>
-          <Link href="/draw" className="btn primary">+ Draw</Link>
+          <Link href="/draw" className="btn primary">Open Studio</Link>
         </header>
         {children}
       </body>

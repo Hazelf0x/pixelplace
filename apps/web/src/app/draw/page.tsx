@@ -17,21 +17,24 @@ mirror off
 line 6,9 9,9 eye
 `
 
-export default async function DrawPage({
+export default async function StudioPage({
   searchParams
 }: {
-  searchParams: Promise<{ from?: string }>
+  searchParams: Promise<{ from?: string; prompt?: string }>
 }) {
-  const { from } = await searchParams
+  const { from, prompt } = await searchParams
   const initialSource = (from && (await getPostSource(from))) || DEFAULT_SOURCE
 
   return (
-    <main className="container">
+    <main className="container wide">
       <div className="page-head">
-        <h1>Draw</h1>
-        <p>Write PixelCraft on the left — it renders live. Save to post it.</p>
+        <h1>Studio</h1>
+        <p>
+          PixelCraft on the left, live render on the right. Ask Claude for a draft, then make
+          it yours — the moment you edit, the work is credited to you.
+        </p>
       </div>
-      <PixelEditor initialSource={initialSource} />
+      <PixelEditor initialSource={initialSource} initialPrompt={prompt ?? ''} autoDraw={Boolean(prompt)} />
     </main>
   )
 }
