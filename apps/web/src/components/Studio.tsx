@@ -305,7 +305,10 @@ function AgentPanel({
   activity: ActivityEntry[]
   onLoadExample: (slug: string) => void
 }) {
-  const [available] = useState(() => (typeof window === 'undefined' ? false : isWebMcpAvailable()))
+  // Detected in an effect, not during render: the server always renders "no agent",
+  // so probing during the first client render is a guaranteed hydration mismatch.
+  const [available, setAvailable] = useState(false)
+  useEffect(() => setAvailable(isWebMcpAvailable()), [])
 
   return (
     <section className="agent-pane">

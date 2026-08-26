@@ -1,9 +1,9 @@
 // A small, typed layer over the WebMCP imperative API.
 //
-// WebMCP (`document.modelContext`) lets a page hand an agent real tools instead of
-// leaving it to guess at the DOM. The API is young and ships behind a flag, so
-// everything here is feature-detected: with no agent present the page is an ordinary
-// pixel editor, and nothing below ever runs.
+// WebMCP (`navigator.modelContext`, also aliased onto `document`) lets a page hand an
+// agent real tools instead of leaving it to guess at the DOM. The API is young and
+// ships behind a flag, so everything here is feature-detected: with no agent present
+// the page is an ordinary pixel editor, and nothing below ever runs.
 //
 // Two constraints from the spec shape every tool in this app:
 //   1. Results must be JSON-serializable. A tool CANNOT return an image.
@@ -50,8 +50,15 @@ interface ModelContext {
 
 function modelContext(): ModelContext | null {
   if (typeof document === 'undefined') return null
-  const candidate = (document as unknown as { modelContext?: ModelContext }).modelContext
-  return candidate && typeof candidate.registerTool === 'function' ? candidate : null
+  // Chrome 151 exposes the same object on both `navigator` and `document`, but the
+  // spec text and other implementations are not settled on which is canonical.
+  // Checking both costs nothing and means we work wherever it lands.
+  const hosts = [navigator, document] as unknown as Array<{ modelContext?: ModelContext }>
+  for (const host of hosts) {
+    const candidate = host?.modelContext
+    if (candidate && typeof candidate.registerTool === 'function') return candidate
+  }
+  return null
 }
 
 /** Whether this browser exposes WebMCP at all. */
