@@ -42,7 +42,7 @@ where it meant, and honest about being nothing more:
 
 ## The tools
 
-Registered with `document.modelContext.registerTool` in
+Registered with `navigator.modelContext.registerTool` in
 [`src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts).
 
 | Tool | Does |
@@ -112,6 +112,12 @@ npm run dev -w @pixelplace/web       # http://localhost:3000
 
 To connect an agent: open the Studio in ChatGPT's in-app browser, or in Chrome with
 `chrome://flags/#enable-webmcp-testing` enabled.
+
+Verified end to end in Chrome 151 **stable** — no Canary build needed. Chrome exposes the same
+object on `navigator.modelContext` and `document.modelContext`, and an agent-side harness at
+`navigator.modelContextTesting`, whose `executeTool(name, jsonArgsString)` takes its arguments
+as a JSON **string**. Without the flag nothing is exposed and the Studio is an ordinary pixel
+editor, which is the intended fallback.
 
 ### Staying in step with CodingArt
 
