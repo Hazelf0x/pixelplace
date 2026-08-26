@@ -211,7 +211,9 @@ export function createStudioTools(api: StudioApi, log: (tool: string, detail: st
             type: 'integer',
             minimum: 8,
             maximum: 48,
-            description: 'Grid size on the long edge. Default 24. Higher costs more tokens.'
+            description:
+              'Maximum grid size on the long edge. The map preserves aspect ratio and reports its ' +
+              'actual mapWidth/mapHeight. Default 24. Higher costs more tokens.'
           }
         }
       },
@@ -220,7 +222,7 @@ export function createStudioTools(api: StudioApi, log: (tool: string, detail: st
         const { frame, detail } = (input ?? {}) as { frame?: number; detail?: number }
         try {
           const described = describeRender(api.getSource(), frame ?? api.getFrame(), detail ?? 24)
-          note('describe_canvas', `read the canvas as a ${described.map[0]?.length ?? 0}-wide text map`)
+          note('describe_canvas', `read the canvas as a ${described.mapWidth}×${described.mapHeight} text map`)
           return ok(described)
         } catch (error) {
           note('describe_canvas', 'failed — the canvas program does not compile', false)

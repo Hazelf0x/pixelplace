@@ -82,6 +82,9 @@ const MAP_KEYS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
 export interface RenderDescription {
   width: number
   height: number
+  /** Actual dimensions of the downsampled text map. */
+  mapWidth: number
+  mapHeight: number
   hasAnimation: boolean
   frameCount: number
   paletteDeclared: string[]
@@ -99,8 +102,9 @@ export interface RenderDescription {
  * Reduce a rendered frame to a small character grid.
  *
  * Each cell reports the most common opaque color in that region, so the map shows
- * layout and silhouette rather than exact pixels. Capped at 32 columns because a
- * larger grid costs an agent tokens without telling it much more.
+ * layout and silhouette rather than exact pixels. `maxDimension` controls the map's
+ * long edge; the other edge is scaled proportionally and source pixels are divided
+ * across variable-size cells when the ratio is not an integer.
  */
 export function describeRender(source: string, frame = 0, maxDimension = 24): RenderDescription {
   const render = renderToRgba(source, { frame, scale: 1 })
@@ -136,16 +140,25 @@ export function describeRender(source: string, frame = 0, maxDimension = 24): Re
   const ordered = [...tally.entries()].sort((a, b) => b[1] - a[1]).map(([color]) => color)
   const keyFor = new Map(ordered.map((color, index) => [color, MAP_KEYS[index] ?? '?']))
 
-  const step = Math.max(1, Math.ceil(Math.max(w, h) / maxDimension))
+  const requestedMax = Number.isFinite(maxDimension)
+    ? Math.min(48, Math.max(1, Math.floor(maxDimension)))
+    : 24
+  const mapScale = Math.min(1, requestedMax / Math.max(w, h))
+  const mapWidth = Math.max(1, Math.round(w * mapScale))
+  const mapHeight = Math.max(1, Math.round(h * mapScale))
   const map: string[] = []
-  for (let cellY = 0; cellY < h; cellY += step) {
+  for (let cellY = 0; cellY < mapHeight; cellY++) {
+    const sourceY0 = Math.floor((cellY * h) / mapHeight)
+    const sourceY1 = Math.floor(((cellY + 1) * h) / mapHeight)
     let row = ''
-    for (let cellX = 0; cellX < w; cellX += step) {
+    for (let cellX = 0; cellX < mapWidth; cellX++) {
+      const sourceX0 = Math.floor((cellX * w) / mapWidth)
+      const sourceX1 = Math.floor(((cellX + 1) * w) / mapWidth)
       const counts = new Map<string, number>()
       let opaque = 0
       let total = 0
-      for (let y = cellY; y < Math.min(cellY + step, h); y++) {
-        for (let x = cellX; x < Math.min(cellX + step, w); x++) {
+      for (let y = sourceY0; y < sourceY1; y++) {
+        for (let x = sourceX0; x < sourceX1; x++) {
           total++
           const i = (y * w + x) * 4
           if (rgba[i + 3] === 0) continue
@@ -168,10 +181,14 @@ export function describeRender(source: string, frame = 0, maxDimension = 24): Re
   for (const color of ordered) legend[keyFor.get(color) as string] = color
 
   const coverage = measureCoverage(source, { frame })
+  const cellWidth = Math.round((w / mapWidth) * 100) / 100
+  const cellHeight = Math.round((h / mapHeight) * 100) / 100
 
   return {
     width: w,
     height: h,
+    mapWidth,
+    mapHeight,
     hasAnimation: render.hasAnimation,
     frameCount: render.frameCount,
     paletteDeclared: render.palette,
@@ -185,7 +202,7 @@ export function describeRender(source: string, frame = 0, maxDimension = 24): Re
     map,
     legend,
     note:
-      `Each character is roughly ${step}x${step} source pixel(s), showing the dominant color of that ` +
+      `Each character covers about ${cellWidth}x${cellHeight} source pixel(s), showing the dominant color of that ` +
       `region. This is a coarse read of layout and silhouette, not the artwork — the person looking ` +
       `at the page can see the real thing, so ask them about anything the map cannot settle.`
   }

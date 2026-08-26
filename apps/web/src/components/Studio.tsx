@@ -340,14 +340,20 @@ function AgentPanel({
   const [available, setAvailable] = useState(false)
   useEffect(() => setAvailable(isWebMcpAvailable()), [])
 
+  const registered = status.state === 'registered'
+  const connecting = available && status.state === 'unsupported'
+
   return (
     <section className="agent-pane">
       <div className="pane-head">
         <h2>Agent</h2>
-        <span className={`mcp-dot ${status.state === 'registered' ? 'on' : 'off'}`} aria-hidden="true" />
+        <span
+          className={`mcp-dot ${registered ? 'on' : connecting ? 'pending' : 'off'}`}
+          aria-hidden="true"
+        />
       </div>
 
-      {status.state === 'registered' ? (
+      {registered ? (
         <>
           <p className="agent-lead">
             <strong>{status.tools.length} tools</strong> are live on this page. Ask your agent to draw
@@ -364,14 +370,18 @@ function AgentPanel({
       ) : (
         <div className="agent-lead">
           <p>
-            {available
-              ? 'WebMCP is present but registration did not complete.'
-              : 'No agent connected. This page is a normal pixel editor without one.'}
+            {status.state === 'failed'
+              ? 'WebMCP is present, but the Studio tools could not be registered.'
+              : connecting
+                ? 'WebMCP detected. Connecting the Studio tools…'
+                : 'No agent connected. This page is a normal pixel editor without one.'}
           </p>
-          <p className="agent-hint">
-            To connect: open this page in ChatGPT&apos;s in-app browser, or in Chrome with{' '}
-            <code>chrome://flags/#enable-webmcp-testing</code> enabled.
-          </p>
+          {!connecting && status.state !== 'failed' && (
+            <p className="agent-hint">
+              To connect: open this page in ChatGPT&apos;s in-app browser, or in Chrome with{' '}
+              <code>chrome://flags/#enable-webmcp-testing</code> enabled.
+            </p>
+          )}
           {status.state === 'failed' && <p className="diag error">{status.error}</p>}
         </div>
       )}

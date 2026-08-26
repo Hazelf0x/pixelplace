@@ -226,6 +226,7 @@
 /* ---------- Agent panel ---------- */
 
 .mcp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); flex: none; }
+.mcp-dot.pending { background: var(--accent); box-shadow: 0 0 0 3px rgba(255, 145, 113, 0.14); }
 .mcp-dot.on { background: var(--ok); box-shadow: 0 0 0 3px rgba(126, 231, 135, 0.16); }
 
 .agent-lead { padding: 13px 14px; margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
