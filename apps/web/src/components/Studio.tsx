@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { renderToRgba, type BrowserRenderResult } from '@pixelplace/pixelcraft/browser'
 import { downloadGif, downloadPng, downloadSource, paintToCanvas } from '@/lib/render-client'
 import { createStudioTools, type ActivityEntry } from '@/lib/studio-tools'
@@ -20,6 +21,12 @@ px 4,17 moon
 `
 
 const AUTOSAVE_KEY = 'pixelplace.studio.source'
+const MAX_HISTORY = 40
+
+interface SourceHistoryEntry {
+  source: string
+  action: string
+}
 
 export default function Studio() {
   const [source, setSource] = useState(STARTER)
@@ -33,9 +40,18 @@ export default function Studio() {
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [mcp, setMcp] = useState<RegistrationStatus>({ state: 'unsupported' })
   const [flash, setFlash] = useState<string | null>(null)
+  const [past, setPast] = useState<SourceHistoryEntry[]>([])
+  const [future, setFuture] = useState<SourceHistoryEntry[]>([])
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const activityId = useRef(0)
+  const manualBatchActive = useRef(false)
+  const manualBatchTimer = useRef<number | null>(null)
+  // Tools register once, so all edits read and write through this ref instead of
+  // closing over an old render. Updating it synchronously also means a tool called
+  // immediately after another tool sees the new program before React rerenders.
+  const live = useRef({ source, frame })
+  live.current = { source, frame }
 
   // Compiling is fast enough in the browser to do on every change, so the preview
   // tracks the source with no debounce and no request.
@@ -155,10 +171,72 @@ export default function Studio() {
     )
   }, [])
 
-  // Tools are registered once, but must always act on current state — so they read
-  // and write through this ref rather than closing over a stale render's values.
-  const live = useRef({ source, frame })
-  live.current = { source, frame }
+  const finishManualBatch = useCallback(() => {
+    if (manualBatchTimer.current !== null) window.clearTimeout(manualBatchTimer.current)
+    manualBatchTimer.current = null
+    manualBatchActive.current = false
+  }, [])
+
+  useEffect(() => () => finishManualBatch(), [finishManualBatch])
+
+  /** Apply a discrete revision from an agent or example, preserving the prior source. */
+  const applySource = useCallback(
+    (next: string, action: string) => {
+      const current = live.current.source
+      if (next === current) return
+      finishManualBatch()
+      setPast((entries) => [...entries, { source: current, action }].slice(-MAX_HISTORY))
+      setFuture([])
+      live.current = { ...live.current, source: next }
+      setSource(next)
+    },
+    [finishManualBatch]
+  )
+
+  /** Group a person's continuous typing into one undoable hand-edit revision. */
+  const editSourceByHand = useCallback((next: string) => {
+    const current = live.current.source
+    if (next === current) return
+
+    if (!manualBatchActive.current) {
+      manualBatchActive.current = true
+      setPast((entries) => [...entries, { source: current, action: 'Hand edit' }].slice(-MAX_HISTORY))
+      setFuture([])
+    }
+
+    live.current = { ...live.current, source: next }
+    setSource(next)
+    if (manualBatchTimer.current !== null) window.clearTimeout(manualBatchTimer.current)
+    manualBatchTimer.current = window.setTimeout(() => {
+      manualBatchActive.current = false
+      manualBatchTimer.current = null
+    }, 800)
+  }, [])
+
+  const undoSource = useCallback(() => {
+    const previous = past[past.length - 1]
+    if (!previous) return
+    finishManualBatch()
+    const current = live.current.source
+    setPast(past.slice(0, -1))
+    setFuture((entries) => [...entries, { source: current, action: previous.action }].slice(-MAX_HISTORY))
+    live.current = { ...live.current, source: previous.source }
+    setSource(previous.source)
+  }, [finishManualBatch, past])
+
+  const redoSource = useCallback(() => {
+    const next = future[future.length - 1]
+    if (!next) return
+    finishManualBatch()
+    const current = live.current.source
+    setFuture(future.slice(0, -1))
+    setPast((entries) => [...entries, { source: current, action: next.action }].slice(-MAX_HISTORY))
+    live.current = { ...live.current, source: next.source }
+    setSource(next.source)
+  }, [finishManualBatch, future])
+
+  const undoAction = past[past.length - 1]?.action
+  const redoAction = future[future.length - 1]?.action
 
   const exportArtwork = useCallback(
     async (format: 'png' | 'gif' | 'source', scale: number): Promise<string> => {
@@ -176,7 +254,7 @@ export default function Studio() {
     const tools = createStudioTools(
       {
         getSource: () => live.current.source,
-        setSource: (next) => setSource(next),
+        setSource: applySource,
         getFrame: () => live.current.frame,
         setFrame: (next) => setFrame(next),
         setPlaying: (next) => setPlaying(next),
@@ -187,7 +265,7 @@ export default function Studio() {
 
     registerTools(tools, controller.signal).then(setMcp)
     return () => controller.abort()
-  }, [exportArtwork, log])
+  }, [applySource, exportArtwork, log])
 
   const runExport = async (format: 'png' | 'gif' | 'source') => {
     try {
@@ -207,18 +285,41 @@ export default function Studio() {
       <section className="editor-pane">
         <div className="pane-head">
           <h2>Source</h2>
-          <span className="pane-note">
-            {render.ok
-              ? `${render.sourceWidth}×${render.sourceHeight}${render.hasAnimation ? ` · ${render.frameCount} frames` : ''}`
-              : `${errors.length} error${errors.length === 1 ? '' : 's'}`}
-          </span>
+          <div className="editor-head-actions">
+            <span className="pane-note">
+              {render.ok
+                ? `${render.sourceWidth}×${render.sourceHeight}${render.hasAnimation ? ` · ${render.frameCount} frames` : ''}`
+                : `${errors.length} error${errors.length === 1 ? '' : 's'}`}
+            </span>
+            <div className="history-controls" aria-label="Source history">
+              <button
+                className="btn small ghost"
+                onClick={undoSource}
+                disabled={!undoAction}
+                title={undoAction ? `Undo ${undoAction.toLowerCase()}` : 'Nothing to undo'}
+              >
+                Undo
+              </button>
+              <button
+                className="btn small ghost"
+                onClick={redoSource}
+                disabled={!redoAction}
+                title={redoAction ? `Redo ${redoAction.toLowerCase()}` : 'Nothing to redo'}
+              >
+                Redo
+              </button>
+              <Link href="/guide" className="btn small ghost">
+                Guide
+              </Link>
+            </div>
+          </div>
         </div>
         <textarea
           className="source"
           value={ready ? source : ''}
           readOnly={!ready}
           spellCheck={false}
-          onChange={(event) => setSource(event.target.value)}
+          onChange={(event) => editSourceByHand(event.target.value)}
           aria-label="PixelCraft source"
         />
         <div className="diagnostics">
@@ -316,7 +417,7 @@ export default function Studio() {
         onLoadExample={async (slug) => {
           const loaded = await loadExampleSource(slug)
           if (loaded) {
-            setSource(loaded)
+            applySource(loaded, 'Example load')
             setFrame(0)
             setPlaying(true)
           }
@@ -366,6 +467,26 @@ function AgentPanel({
               </li>
             ))}
           </ul>
+          <div className="collaboration-card">
+            <div className="eyebrow">Create together</div>
+            <p>
+              <strong>You art-direct.</strong> Describe, judge, and steer. You never need to write
+              code—but the source is yours to edit whenever you want direct control.
+            </p>
+            <ol className="collaboration-steps">
+              <li><span>1</span>Ask for a scene, sprite, icon set, or animation.</li>
+              <li><span>2</span>Judge the canvas and say what should change.</li>
+              <li><span>3</span>Undo any revision, or edit a line and let the agent continue.</li>
+            </ol>
+            <div className="prompt-starters" aria-label="Prompt ideas">
+              <code>Draw a 32×32 forest shrine with a four-frame fire.</code>
+              <code>Keep the composition. Make the palette colder.</code>
+              <code>Read my hand edit, then add a sparkle loop.</code>
+            </div>
+            <Link href="/guide" className="guide-link">
+              Learn enough PixelCraft to tweak it yourself →
+            </Link>
+          </div>
         </>
       ) : (
         <div className="agent-lead">
@@ -405,7 +526,7 @@ function AgentPanel({
       )}
 
       <div className="pane-head">
-        <h2>Try one</h2>
+        <h2>Study an example</h2>
       </div>
       <div className="quick-examples">
         {['opus5_deep_field', 'fable_ink_sea_v2', 'ritual_vfx_loop', 'icon_sheet_basics'].map((slug) => (

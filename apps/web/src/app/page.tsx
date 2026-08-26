@@ -23,14 +23,39 @@ export default function GalleryPage() {
           This page hands your agent real tools through <strong>WebMCP</strong>. It writes the
           program; you watch the canvas and say what to change.
         </p>
+        <p>
+          Built for indie game makers, pixel artists, and small teams who want AI speed without
+          surrendering exact pixels—or authorship.
+        </p>
         <div className="hero-actions">
           <Link href="/studio" className="btn primary">
             Open the Studio
+          </Link>
+          <Link href="/guide" className="btn ghost">
+            Learn PixelCraft
           </Link>
           <Link href="/about" className="btn ghost">
             How it works
           </Link>
         </div>
+      </section>
+
+      <section className="impact-grid" aria-label="Why PixelPlace works">
+        <article>
+          <span>01</span>
+          <h2>Exact by construction</h2>
+          <p>Canvas size, palette, geometry, and frame count are enforced by a real compiler.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h2>Human-directed</h2>
+          <p>Ask in natural language, judge with your eyes, undo freely, or edit the source yourself.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h2>Local and portable</h2>
+          <p>No account or API key. Your editable program and exports stay in the browser.</p>
+        </article>
       </section>
 
       <section className="gallery-head">

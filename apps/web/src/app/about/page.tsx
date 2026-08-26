@@ -30,6 +30,14 @@ export default function AboutPage() {
         <strong>what should each side of the collaboration do</strong>.
       </p>
 
+      <h2>Who it is for</h2>
+      <p>
+        PixelPlace is for indie game makers, pixel artists, and small creative teams who want an
+        agent to accelerate exploration without giving up a precise grid or an editable source.
+        Natural-language direction is the default. Hand-editing is an optional second instrument,
+        not homework you must finish before you can create.
+      </p>
+
       <h2>The division of labour</h2>
       <p>
         WebMCP tool results have to be JSON — a tool cannot return an image. That constraint
@@ -68,6 +76,19 @@ export default function AboutPage() {
         That is a character with hair, a face, a torso with an armour stripe, and two legs. An
         agent can reason about it. It still cannot tell you if the art is any good — which is
         exactly what the person watching the canvas is for.
+      </p>
+
+      <h2>A normal session</h2>
+      <ol>
+        <li>Tell the agent what to make, or ask it to remix a finished example.</li>
+        <li>It compile-checks the PixelCraft program before applying it to the canvas.</li>
+        <li>You judge the visible result and describe a revision in ordinary language.</li>
+        <li>Undo a revision at any time—or change one line yourself and ask the agent to continue.</li>
+      </ol>
+      <p>
+        That last step is genuine co-editing: <code>get_program</code> reads the current Studio
+        source, including your hand edits, so neither collaborator owns a separate stale copy.
+        The visible history makes both human and agent changes reversible.
       </p>
 
       <h2>What runs where</h2>
@@ -126,6 +147,10 @@ export default function AboutPage() {
       <p style={{ marginTop: 26 }}>
         <Link href="/studio" className="btn primary">
           Open the Studio
+        </Link>
+        {' '}
+        <Link href="/guide" className="btn ghost">
+          Read the human guide
         </Link>
       </p>
     </main>

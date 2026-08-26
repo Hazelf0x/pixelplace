@@ -38,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span>Pixel<em>Place</em></span>
           </Link>
           <Link href="/" className="navlink">Gallery</Link>
+          <Link href="/guide" className="navlink">Guide</Link>
           <Link href="/about" className="navlink">How it works</Link>
           <div className="spacer" />
           <Link href="/studio" className="btn primary">Open Studio</Link>

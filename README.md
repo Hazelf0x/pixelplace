@@ -43,7 +43,7 @@ where it meant, and honest about being nothing more:
 ## The tools
 
 Registered with `navigator.modelContext.registerTool` in
-[`src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts).
+[`apps/web/src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts).
 
 | Tool | Does |
 |---|---|
@@ -58,6 +58,22 @@ Registered with `navigator.modelContext.registerTool` in
 
 Every tool call appears in an activity feed on the page, so the person can watch the agent work.
 
+## The collaboration loop
+
+PixelPlace is built for indie game makers, pixel artists, and small creative teams who want AI
+speed without surrendering exact pixels or authorship. A normal session is intentionally small:
+
+1. The person describes a scene, sprite, icon set, or animation.
+2. The agent writes PixelCraft and uses `check_program` before applying it.
+3. The person judges the real canvas and directs the next revision in natural language.
+4. Either collaborator can edit the same source. The person can undo any revision; the agent
+   calls `get_program` to continue from hand edits rather than a stale private copy.
+
+Nobody has to learn the language to create. The human-facing `/guide` is there for people who
+*want* direct control: changing a palette value, nudging a shape, or understanding what the agent
+made. Its full reference and the agent's `get_pixelcraft_guide` come from the compiler's same
+documentation table.
+
 ## Everything runs in your browser
 
 The lexer, parser, compiler, interpreter and renderer are all client-side
@@ -69,7 +85,18 @@ that round-trips back into the editor.
 Because the program *is* the document, a drawing is a string: small enough to paste into a
 chat, diff in git, or hand back to an agent to edit.
 
-## Monorepo layout
+## One product, three modules
+
+**PixelPlace is the public product and WebMCP Challenge entry.** PixelCraft is its embedded
+language engine—not a separate hosted backend—and the stdio MCP server is an optional adapter
+for coding agents outside the browser. Keeping these modules open-source and in one repository
+makes the boundary explicit:
+
+```
+person <-> agent <-> PixelPlace WebMCP tools <-> PixelCraft compiler -> canvas
+```
+
+The repository layout follows that boundary:
 
 ```
 packages/

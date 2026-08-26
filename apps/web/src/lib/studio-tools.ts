@@ -26,7 +26,7 @@ import { GALLERY, findEntry, loadExampleSource } from './gallery'
 /** What a tool needs from the live Studio. Implemented over refs, so tools register once. */
 export interface StudioApi {
   getSource: () => string
-  setSource: (source: string) => void
+  setSource: (source: string, action: string) => void
   getFrame: () => number
   setFrame: (frame: number) => void
   setPlaying: (playing: boolean) => void
@@ -171,7 +171,7 @@ export function createStudioTools(api: StudioApi, log: (tool: string, detail: st
           return fail('Not applied: the program does not compile.', result)
         }
 
-        api.setSource(source)
+        api.setSource(source, 'Agent change')
         api.setFrame(0)
         if (result.animation) api.setPlaying(true)
         note('set_program', `drew ${result.canvas.width}x${result.canvas.height}${result.animation ? `, ${result.animation.frames} frames` : ''}`)
@@ -311,7 +311,7 @@ export function createStudioTools(api: StudioApi, log: (tool: string, detail: st
         const source = await loadExampleSource(slug)
         if (source === null) return fail(`Could not load the program for "${slug}".`)
 
-        api.setSource(source)
+        api.setSource(source, 'Example load')
         api.setFrame(0)
         api.setPlaying(entry.frameCount > 0)
         note('load_example', `loaded "${entry.title}"`)
