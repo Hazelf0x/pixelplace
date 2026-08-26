@@ -21,8 +21,13 @@ px 4,17 moon
 
 const AUTOSAVE_KEY = 'pixelplace.studio.source'
 
-export default function Studio({ initialSource }: { initialSource?: string }) {
-  const [source, setSource] = useState(initialSource ?? STARTER)
+export default function Studio() {
+  const [source, setSource] = useState(STARTER)
+  // The first program is decided on the client — from ?example=, then autosave, then
+  // the starter. Until that settles the panes stay empty, so the starter art never
+  // flashes on its way to being replaced. The server renders this same empty state,
+  // which is what keeps hydration honest.
+  const [ready, setReady] = useState(false)
   const [frame, setFrame] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [activity, setActivity] = useState<ActivityEntry[]>([])
@@ -102,25 +107,47 @@ export default function Studio({ initialSource }: { initialSource?: string }) {
     return () => window.clearInterval(timer)
   }, [playing, render.ok, render.hasAnimation, render.frameCount])
 
-  // Restore the last session's work, and keep it saved. This is the whole of our
-  // persistence story: the program is the document, so one string is the save file.
-  useEffect(() => {
-    if (initialSource) return
-    try {
-      const saved = window.localStorage.getItem(AUTOSAVE_KEY)
-      if (saved) setSource(saved)
-    } catch {
-      // Private windows and blocked site data are fine; the starter program stands in.
+  // Decide the opening program. A ?example= link wins over autosave, because asking
+  // for a specific piece is a clearer intent than "whatever I had open last time".
+  //
+  // This runs in a LAYOUT effect so the no-example paths settle before the browser
+  // paints; only a gallery link, which has to fetch, shows a loading beat.
+  useLayoutEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get('example')
+    if (!slug) {
+      try {
+        const saved = window.localStorage.getItem(AUTOSAVE_KEY)
+        if (saved) setSource(saved)
+      } catch {
+        // Private windows and blocked site data are fine; the starter stands in.
+      }
+      setReady(true)
+      return
     }
-  }, [initialSource])
 
+    let cancelled = false
+    loadExampleSource(slug).then((loaded) => {
+      if (cancelled) return
+      // An unknown slug just opens the studio on the starter program.
+      if (loaded) setSource(loaded)
+      setReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Keep the work saved. This is the whole of our persistence story: the program is
+  // the document, so one string is the save file. Gated on `ready` so the starter is
+  // never written over the saved program in the moment before it is restored.
   useEffect(() => {
+    if (!ready) return
     try {
       window.localStorage.setItem(AUTOSAVE_KEY, source)
     } catch {
       // Not being able to autosave must never break editing.
     }
-  }, [source])
+  }, [source, ready])
 
   const log = useCallback((tool: string, detail: string, succeeded: boolean) => {
     setActivity((entries) =>
@@ -188,7 +215,8 @@ export default function Studio({ initialSource }: { initialSource?: string }) {
         </div>
         <textarea
           className="source"
-          value={source}
+          value={ready ? source : ''}
+          readOnly={!ready}
           spellCheck={false}
           onChange={(event) => setSource(event.target.value)}
           aria-label="PixelCraft source"
@@ -244,7 +272,9 @@ export default function Studio({ initialSource }: { initialSource?: string }) {
         </div>
 
         <div className="stage" ref={stageRef}>
-          {render.ok ? (
+          {!ready ? (
+            <p className="stage-empty">Loading…</p>
+          ) : render.ok ? (
             // Rendered at native size and scaled up by an INTEGER factor in CSS, so
             // every source pixel stays a crisp square block. Fractional scaling is
             // what makes pixel art look muddy, so it never happens here.

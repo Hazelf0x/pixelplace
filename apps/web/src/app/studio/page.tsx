@@ -6,25 +6,14 @@ export const metadata = {
     'Write PixelCraft by hand or hand the tools to your agent. The compiler runs in your browser.'
 }
 
-export default async function StudioPage({
-  searchParams
-}: {
-  searchParams: Promise<{ example?: string }>
-}) {
-  const { example } = await searchParams
-
-  // The program is the document, so an example is just a source string. Loading it
-  // server-side keeps the first paint correct instead of flashing the starter art.
-  let initialSource: string | undefined
-  if (example && /^[a-z0-9_-]+$/i.test(example)) {
-    const { readFile } = await import('node:fs/promises')
-    const { join } = await import('node:path')
-    try {
-      initialSource = await readFile(join(process.cwd(), 'public', 'gallery', `${example}.pc`), 'utf8')
-    } catch {
-      // An unknown slug just opens the studio on the starter program.
-    }
-  }
-
-  return <Studio initialSource={initialSource} />
+// Deliberately static. The studio used to read public/gallery/<slug>.pc on the server
+// so an ?example= link painted correctly on first render — but that path is built from
+// the query string, so Next's file tracer cannot see it and would ship the function
+// without those files. On a serverless host every gallery link would then silently
+// open the starter program instead.
+//
+// The client already fetches example sources for load_example, so it does that here
+// too. Nothing on this page needs a server, which is the claim the README makes.
+export default function StudioPage() {
+  return <Studio />
 }
