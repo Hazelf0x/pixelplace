@@ -6,10 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gallery": "node scripts/build-gallery.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.104.1",
     "@pixelplace/pixelcraft": "*",
     "next": "^15.1.6",
     "react": "^19.0.0",

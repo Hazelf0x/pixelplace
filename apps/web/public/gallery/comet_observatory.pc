@@ -1,0 +1,139 @@
+## Comet Observatory
+## A brass observatory on a snowy ridge under a passing comet
+## Showcases: version pragma, palette preset + pal+, const/anchor, layered glows
+version 0.1
+canvas 48x48
+
+pal :dawnbringer16
+pal+ skyTop=#07111f skyMid=#142240 skyHaze=#2a3c68
+pal+ star=#f7f2d3 moon=#f1e1ae
+pal+ cometCore=#fff4d9 cometTrail=#8ecfff cometHalo=#8ecfff33 cometSpark=#dff4ff
+pal+ stone=#58657a stoneHi=#74839a stoneShadow=#2c3444
+pal+ brass=#d2aa69 brassHi=#f0d3a0 brassShadow=#7a5831
+pal+ glassFill=#7fc5ff33 glassEdge=#9fdcff
+pal+ snow=#edf3ff snowShadow=#b7c8e8
+pal+ pine=#1d392f pineHi=#295342 trunk=#4c3327
+pal+ windowWarm=#ffc86e windowCore=#fff3bf path=#8f9bb3
+
+const groundY = 33
+anchor observatory 24,26
+anchor moonPos 10,8
+anchor cometHead 35,7
+
+bitmap "star_dot" map S=star {
+  "S"
+}
+
+bitmap "star_cross" map S=star {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+group "pine_tall" {
+  rect 4,14 2x10 trunk
+  rect 2,10 6x6 pine
+  rect 1,6 8x6 pineHi
+  rect 0,2 10x6 pine
+  px 4,1 5,1 3,0 6,0 pineHi
+}
+
+group "pine_small" {
+  rect 3,10 2x7 trunk
+  rect 1,6 6x5 pine
+  rect 0,3 8x4 pineHi
+  px 3,2 4,2 2,1 5,1 3,0 4,0 pine
+}
+
+group "lamp" {
+  rect 1,1 1x6 brassShadow
+  rect 0,0 3x2 brass
+  glow 1,1 3 #ffc86e18
+  px 1,1 windowCore
+}
+
+layer "sky"
+rect 0,0 48x12 skyTop
+rect 0,12 48x10 skyMid
+rect 0,22 48x11 skyHaze
+
+glow moonPos 5 #f1e1ae22
+arc moonPos 3 210 330 moon
+
+scatter "star_dot" in 0,0 48x18 count 34 seed 12
+scatter "star_cross" in 2,2 44x14 count 6 seed 77
+
+line 35,7 24,17 cometTrail
+line 36,7 25,17 cometTrail
+line 34,8 23,18 cometHalo
+glow cometHead 6 cometHalo
+glow cometHead 3 #dff4ff33
+circ cometHead 1 cometCore
+px 33,9 31,11 29,13 27,15 cometSpark
+
+layer "ridge"
+poly 0,33 7,31 14,33 20,29 26,30 32,27 39,30 47,28 47,47 0,47 stoneShadow
+poly 0,36 9,34 17,36 22,32 27,33 34,30 41,33 47,31 47,47 0,47 stone
+rect 0,40 48x8 stoneShadow
+
+line 1,35 8,34 snow
+line 15,34 21,32 snow
+line 28,33 34,31 snow
+line 38,34 45,32 snow
+px 12,35 13,35 24,34 25,34 36,35 37,35 snowShadow
+
+layer "architecture"
+rect 15,27 18x10 stone
+orect 15,27 18x10 brassShadow
+ellipse observatory 10x7 stoneHi
+oellipse observatory 10x7 brass
+ellipse observatory 8x5 stone
+arc observatory 10 200 340 brassHi
+
+line 24,24 30,17 skyTop
+line 25,24 31,17 skyTop
+px 26,22 27,21 28,20 29,19 skyTop
+
+line 22,25 28,20 brassHi
+line 21,26 29,21 brassShadow
+circ 20,27 1 brass
+
+rect 22,32 4x5 brassShadow
+arc 24,32 2 180 0 brass
+px 23,35 24,35 windowWarm
+
+rect 18,31 2x3 windowWarm
+px 18,31 19,31 18,32 19,32 windowCore
+rect 28,31 2x3 windowWarm
+px 28,31 29,31 28,32 29,32 windowCore
+stamp "lamp" at 11,34
+stamp "lamp" at 34,34
+line 18,28 20,22 brassShadow
+line 20,29 21,23 brassShadow
+line 30,28 28,22 brassShadow
+line 28,29 27,23 brassShadow
+
+rect 21,37 6x1 stoneHi
+rect 20,38 8x1 path
+rect 19,39 10x1 stoneShadow
+
+layer "glass"
+ellipse observatory 8x5 glassFill
+oellipse observatory 8x5 glassEdge
+line 19,21 29,27 glassEdge
+px 19,20 21,21 23,22 25,23 glassEdge
+
+layer "lights"
+glow 24,34 2 #ffc86e12
+glow 20,31 2 #ffc86e14
+glow 28,31 2 #ffc86e14
+glow 13,35 2 #ffc86e12
+glow 35,35 2 #ffc86e12
+
+layer "foreground"
+stamp "pine_tall" at 0,24
+stamp "pine_tall" at 40,22
+
+px 3,38 4,39 8,41 40,40 43,38 45,39 snowShadow
+line 17,41 23,40 snow
+line 25,40 31,41 snow

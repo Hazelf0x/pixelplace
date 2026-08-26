@@ -1,0 +1,187 @@
+# Fireball Spell Animation (Projectile)
+# Transparent-friendly projectile with a caster rune for context.
+# Showcases: animation frames, gradient palette, layers, groups, bitmap stamps, repeat, expression coordinates.
+canvas 32x20
+
+# 6-step fire ramp => fire0..fire5
+pal fire=#5a0000..#fff7b2 steps 6
+pal bg=#07060e rune=#5cc6ff runeGlow=#2f84ff33 smoke=#4b2b2b55 aura=#ff7a3324 ember=#ff934466 spark=#ffe58a
+
+bitmap "flare" map H=fire4 M=fire2 L=fire0 {
+  "..H.."
+  ".HHM."
+  "HMMM."
+  ".MLL."
+  "..L.."
+}
+
+bitmap "spark_cross" map S=spark {
+  ".S."
+  "S.S"
+  ".S."
+}
+
+group "orb" {
+  # Soft shell + hot core, slightly biased to the right for motion.
+  glow 4,4 6 aura
+  glow 4,4 4 fire2
+  ellipse 3,4 3x2 fire0
+  circ 4,4 3 fire1
+  circ 5,4 2 fire3
+  px 6,4 fire5
+  px 6,3 fire4
+  px 6,5 fire4
+}
+
+# Scene backdrop for readability (remove if you want a transparent sprite export).
+layer "bg"
+fill 0,0 bg
+
+layer "caster"
+glow 3,10 5 runeGlow
+ocirc 3,10 3 rune
+line 3,7 3,13 rune
+line 0,10 6,10 rune
+px 1,8 5,8 1,12 5,12 rune
+
+frame 0 {
+  let x = 2
+  let y = 6
+
+  layer "trail"
+  cursor ($x - 1, $y + 4)
+  repeat 4 step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($x - 1, $y + 3) ember
+  px ($x - 3, $y + 5) ember
+
+  layer "core"
+  stamp "orb" at ($x, $y)
+  stamp "flare" at ($x + 5, $y + 2)
+  stamp "flare" at ($x + 5, $y + 1) :flipy
+
+  layer "sparks"
+  stamp "spark_cross" at ($x + 7, $y + 2)
+  px ($x + 8, $y + 5) spark
+}
+
+frame 1 {
+  let x = 6
+  let y = 6
+
+  layer "trail"
+  cursor ($x - 1, $y + 4)
+  repeat 4 step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($x - 2, $y + 2) ember
+  px ($x - 4, $y + 5) ember
+  px ($x - 5, $y + 3) fire0
+
+  layer "core"
+  stamp "orb" at ($x, $y)
+  stamp "flare" at ($x + 5, $y + 1)
+  stamp "flare" at ($x + 6, $y + 3) :flipy
+
+  layer "sparks"
+  px ($x + 8, $y + 1) spark
+  stamp "spark_cross" at ($x + 7, $y + 4)
+  px ($x - 1, $y + 1) spark
+}
+
+frame 2 {
+  let x = 10
+  let y = 6
+
+  layer "trail"
+  cursor ($x - 1, $y + 4)
+  repeat 5 step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($x - 2, $y + 3) ember
+  px ($x - 4, $y + 5) ember
+  px ($x - 6, $y + 2) fire0
+
+  layer "core"
+  stamp "orb" at ($x, $y)
+  stamp "flare" at ($x + 6, $y + 2)
+  stamp "flare" at ($x + 5, $y + 0) :flipy
+
+  layer "sparks"
+  stamp "spark_cross" at ($x + 8, $y + 2)
+  px ($x + 9, $y + 5) spark
+  px ($x - 2, $y + 1) spark
+}
+
+frame 3 {
+  let x = 14
+  let y = 6
+
+  layer "trail"
+  cursor ($x - 1, $y + 4)
+  repeat 5 step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($x - 2, $y + 2) ember
+  px ($x - 5, $y + 5) ember
+  px ($x - 7, $y + 3) fire0
+
+  layer "core"
+  stamp "orb" at ($x, $y)
+  stamp "flare" at ($x + 6, $y + 1)
+  stamp "flare" at ($x + 6, $y + 3) :flipy
+
+  layer "sparks"
+  px ($x + 9, $y + 2) spark
+  stamp "spark_cross" at ($x + 8, $y + 4)
+  px ($x - 1, $y + 6) spark
+}
+
+frame 4 {
+  let x = 18
+  let y = 6
+
+  layer "trail"
+  cursor ($x - 1, $y + 4)
+  repeat 5 step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($x - 3, $y + 2) ember
+  px ($x - 5, $y + 6) ember
+  px ($x - 8, $y + 4) fire0
+
+  layer "core"
+  stamp "orb" at ($x, $y)
+  stamp "flare" at ($x + 6, $y + 2)
+  stamp "flare" at ($x + 7, $y + 1) :flipy
+
+  layer "sparks"
+  stamp "spark_cross" at ($x + 9, $y + 3)
+  px ($x + 10, $y + 5) spark
+  px ($x + 1, $y + 1) spark
+}
+
+frame 5 {
+  let x = 21
+  let y = 6
+
+  layer "trail"
+  cursor ($x - 1, $y + 4)
+  repeat 6 step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($x - 3, $y + 3) ember
+  px ($x - 6, $y + 6) ember
+  px ($x - 9, $y + 4) fire0
+
+  layer "core"
+  stamp "orb" at ($x, $y)
+  stamp "flare" at ($x + 7, $y + 2)
+  stamp "flare" at ($x + 7, $y + 1) :flipy
+
+  layer "sparks"
+  px ($x + 10, $y + 2) spark
+  stamp "spark_cross" at ($x + 9, $y + 4)
+  px ($x + 0, $y + 0) spark
+}

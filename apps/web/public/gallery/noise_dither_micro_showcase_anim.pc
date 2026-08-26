@@ -1,0 +1,27 @@
+canvas 24x16
+pal bg=#08111b mist=#103047 mistHi=#1a4f73 stone=#28323f moss=#3d5c45 spark=#7ee7ff glow=#c7f5ff
+
+# Static base.
+layer "base"
+dither bayer at 0,0 24x16 bg mist seed 2
+rect 0,12 24x4 stone
+dither checker at 0,11 24x2 moss stone seed 1
+
+# Animated haze + spark drift.
+timeline 0..11 {
+  each {
+    clear layer "fx"
+    layer "fx"
+
+    dither noise at 0,8 24x4 mist mistHi seed ($frame + 17)
+
+    repeat 18 {
+      let x = lerp(1, 22, noise01($i, $frame, 91))
+      let y = lerp(1, 6, noise01($i, ($frame + 2), 33))
+      px ($x, $y) spark
+    }
+
+    let orbX = lerp(8, 15, sin01($t))
+    glow ($orbX, 10) 3 #c7f5ff88
+  }
+}

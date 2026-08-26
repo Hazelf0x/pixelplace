@@ -1,0 +1,98 @@
+# Intrinsics Showcase: Void Portal Blossom (timeline animation)
+# Highlights:
+# - smoothstep() controls bloom/open-close pacing.
+# - clamp() keeps a noise-wobbled portal center on-screen.
+# - abs() shapes petal tension around midpoint.
+# - step()/min()/max() create deterministic burst gates.
+canvas 56x40
+
+pal abyss=#040612 stone=#12192a edge=#22304a floor=#0d1322
+pal portalDeep=#3f2a78 portalMid=#7f5cff portalRim=#c8a8ff mote=#e5d7ff
+pal aura=#8a63ff44 rune=#b9a6ff
+
+bitmap "rune_mote" map R=rune {
+  ".R."
+  "R.R"
+  ".R."
+}
+
+layer "chamber"
+rect 0,0 56x40 abyss
+rect 0,26 56x14 floor
+orect 4,5 48x30 stone
+orect 7,8 42x24 edge
+line 8,26 47,26 edge
+arc center 18 200 340 stone
+
+timeline 0..63 {
+  each {
+    let tide = smoothstep(0, 1, sin01($t + 0.14))
+    let ringOuter = lerp(8, 15, $tide)
+    let ringInner = lerp(3, 10, cos01($t + 0.21))
+
+    let wobble = lerp(-4, 4, sin01($t * 2 + noise01($frameNumber, 0, 211) * 0.2))
+    let portalX = clamp(($centerX + $wobble), 10, ($width - 10))
+    let portalY = ($centerY + 1)
+
+    let fold = abs($tide - 0.5) * 2
+    let petalBias = max(0.2, (1 - $fold))
+    let petalRadius = lerp(3, 9, $petalBias)
+    let breach = min(1, max(step(0.72, sin01($t * 3)), step(0.94, noise01($frameNumber, 2, 987))))
+
+    layer "portal_glow"
+    clear
+    glow ($portalX, $portalY) ($ringOuter + 3) aura
+    glow ($portalX, $portalY) ($petalRadius + 2) #d9c8ff33
+
+    layer "portal_core"
+    clear
+    circ ($portalX, $portalY) $ringInner portalMid
+    arc ($portalX, $portalY) $ringOuter 0 360 portalRim
+    arc ($portalX, $portalY) $petalRadius 20 140 portalRim
+    arc ($portalX, $portalY) $petalRadius 200 320 portalRim
+    ellipse ($portalX, $portalY) 4x2 portalDeep
+
+    layer "runes"
+    clear
+    stamp "rune_mote" at ($portalX, ($portalY - $ringOuter - 2)) :center
+    stamp "rune_mote" at ($portalX, ($portalY + $ringOuter + 2)) :center
+    stamp "rune_mote" at (($portalX - $ringOuter - 2), $portalY) :center
+    stamp "rune_mote" at (($portalX + $ringOuter + 2), $portalY) :center
+
+    layer "portal_stream"
+    clear
+    repeat 28 {
+      let u = $i / 27
+      let phase = $u + $t
+      let sx = lerp(($portalX - $ringInner), ($portalX + $ringInner), sin01($phase))
+      let sy = lerp(($portalY - $ringOuter), ($portalY + $ringOuter), cos01($phase + 0.25))
+      px ($sx, $sy) mote
+    }
+
+    layer "portal_particles"
+    clear
+    emit "rune_mote" at ($portalX, $portalY)
+      count (lerp(0, 14, $breach))
+      spread 12x8
+      time $frame
+      vel 0x-1
+      jitter 3x2
+      life 9
+      fade
+      seed (140 + $frameNumber)
+  }
+
+  at 10,22,34,46,58 {
+    layer "portal_particles"
+    emit "rune_mote" at center
+      count 26
+      spread 18x12
+      time $localFrame
+      vel 0x-2
+      jitter 4x3
+      active 0..6
+      life 8
+      fade
+      seed (3200 + $frameNumber)
+  }
+}

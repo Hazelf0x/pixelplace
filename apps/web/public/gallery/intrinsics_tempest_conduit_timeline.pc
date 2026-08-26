@@ -1,0 +1,103 @@
+# Intrinsics Showcase: Tempest Conduit (timeline animation)
+# Highlights:
+# - smoothstep() controls storm intensity and rain density.
+# - clamp() bounds cloud depth + lightning strike positions.
+# - step() gates strike events from deterministic noise.
+# - abs()/min()/max() shape conduit charge from strike distance.
+canvas 56x34
+
+pal sky0=#070d18 sky1=#0f1a30 cloud=#2a3852 cloudHi=#3c4f73
+pal tower=#1e2a40 trim=#3e557b conduit=#88b8ff conduitGlow=#88b8ff44
+pal rain=#7fb5ff bolt=#d9ecff boltHot=#ffffff ion=#cce6ff floor=#0b111d
+
+bitmap "ion_spark" map I=ion {
+  "I"
+}
+
+layer "bg"
+rect 0,0 56x34 sky0
+rect 0,8 56x14 sky1
+rect 0,28 56x6 floor
+dither bayer at 0,0 56x18 sky0 sky1 seed 9
+
+layer "towers"
+rect 4,14 10x14 tower
+rect 42,14 10x14 tower
+orect 5,12 8x3 trim
+orect 43,12 8x3 trim
+line 13,20 42,20 trim
+
+timeline 0..47 {
+  each {
+    let storm = smoothstep(0.1, 0.95, cos01($t * 0.7))
+    let wind = lerp(-3, 3, sin01($t * 2))
+    let cloudBandY = clamp(lerp(3, 9, noise01($frameNumber, 0, 77)), 3, 10)
+    let boltX = clamp(lerp(8, 47, noise01($frameNumber, 2, 321)), 8, 47)
+
+    let boltGate = step(0.9, noise01($frameNumber, 1, 888))
+    let surge = max($boltGate, step(0.82, sin01($t * 4)))
+    let rainCount = lerp(24, 64, $storm)
+
+    let centerBias = min(1, abs($boltX - $centerX) / $centerX)
+    let conduitCharge = max(0.2, (1 - $centerBias))
+    let conduitGlowR = lerp(2, 6, $conduitCharge)
+
+    layer "clouds"
+    clear
+    rect 0,0 56x($cloudBandY) cloud
+    dither noise at 0,0 56x($cloudBandY + 2) cloud cloudHi seed (200 + $frameNumber)
+
+    layer "rain"
+    clear
+    repeat $rainCount {
+      let rx = lerp(0, ($width - 1), noise01($i, $frameNumber, 41))
+      let ry = lerp($cloudBandY, ($height - 2), noise01($frameNumber, $i, 73))
+      line ($rx, $ry) ($rx + $wind, $ry + 2) rain
+    }
+
+    layer "conduit"
+    clear
+    glow ($centerX, ($height - 8)) $conduitGlowR conduitGlow
+    rect ($centerX - 2, ($height - 12)) 5x8 conduit
+    orect ($centerX - 3, ($height - 13)) 7x10 trim
+
+    layer "lightning"
+    clear
+    let boltLen = lerp(0, 18, $surge)
+    let boltDrift = lerp(-4, 4, noise01($frameNumber, 3, 111))
+    line ($boltX, $cloudBandY) ($boltX + $boltDrift * $surge, ($cloudBandY + $boltLen)) bolt
+    glow ($boltX, ($cloudBandY + $boltLen - 1)) (lerp(0, 7, $surge)) bolt
+    glow ($centerX, ($height - 10)) (lerp(0, 4, $surge)) boltHot
+
+    layer "sparks"
+    clear
+    emit "ion_spark" at ($centerX, ($height - 10))
+      count (lerp(0, 12, $surge))
+      spread 8x3
+      time $frame
+      vel 0x-1
+      jitter 2x1
+      life 6
+      fade
+      seed (400 + $frameNumber)
+  }
+
+  at 5,13,21,29,37,45 {
+    let strikeX = clamp(lerp(6, 49, noise01($frameNumber, $localFrame, 700)), 6, 49)
+    layer "lightning"
+    line ($strikeX, 2) ($centerX, ($height - 9)) boltHot
+    glow ($centerX, ($height - 9)) 5 boltHot
+
+    layer "sparks"
+    emit "ion_spark" at ($centerX, ($height - 10))
+      count 20
+      spread 12x5
+      time $localFrame
+      vel 0x-2
+      jitter 3x2
+      active 0..5
+      life 7
+      fade
+      seed (9000 + $frameNumber)
+  }
+}

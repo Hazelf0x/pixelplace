@@ -1,0 +1,38 @@
+# Intrinsics Showcase: Hypnotic Iris Loop (minimal style)
+# Focus: compact, meditative motion built from utility intrinsics.
+canvas 33x33
+pal bg=#0a1020 core=#28c8ff ring=#92e9ff accent=#d6f9ff glow=#67d7ff66 spark=#f2fdff
+
+layer "base"
+rect 0,0 33x33 bg
+dither bayer at 0,0 33x33 #070c18 #111a34 seed 3
+
+timeline 0..31 {
+  each {
+    clear layer "fx"
+
+    let wave = sin01($t)
+    let bloom = smoothstep(0.06, 0.94, $wave)
+    let pinch = abs($bloom - 0.5) * 2
+
+    let coreR = lerp(3, 8, $bloom)
+    let shellR = clamp((lerp(7, 14, $bloom) + lerp(-1, 1, noise01($frameNumber, 0, 19))), 6, 14)
+    let haloR = max(2, min(16, ($shellR + 2 - $pinch)))
+
+    let gate = step(0.8, sin01($t * 3 + 0.125))
+    let orbitT = ($t + noise01($frameNumber, 1, 91) * 0.12)
+    let orbX = lerp(8, 24, cos01($orbitT))
+    let orbY = lerp(8, 24, sin01($orbitT))
+
+    layer "fx"
+    glow center $haloR glow
+    circ center $coreR core
+    arc center $shellR 0 360 ring
+    arc center ($shellR + 1) 40 140 accent
+    arc center ($shellR + 1) 220 320 accent
+
+    glow ($orbX, $orbY) (lerp(0, 3, $gate)) #d6f9ff88
+    px ($orbX, $orbY) spark
+    px (($width - 1 - $orbX), $orbY) spark
+  }
+}

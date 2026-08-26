@@ -1,0 +1,179 @@
+# Arcane Lance (emit-driven spell VFX)
+# Gameplay use: projectile cast + impact burst on a target.
+canvas 40x24
+
+pal bg=#060813 floor=#1a2438 caster=#66d9ff enemy=#ff8aa8
+pal boltGlow=#5ec9ff boltCore=#dff8ff trail=#4ba2ff88 spark=#eaf6ff
+pal impact=#88f7ff impactHot=#ffffff smoke=#6993b655
+
+bitmap "bolt_core" map G=boltGlow C=boltCore {
+  "..G.."
+  ".GCG."
+  "..G.."
+}
+
+bitmap "trail_dot" map T=trail {
+  "T"
+}
+
+bitmap "spark" map S=spark {
+  ".S."
+  "S.S"
+  ".S."
+}
+
+bitmap "shard" map I=impact {
+  "I."
+  ".I"
+}
+
+bitmap "smoke_dot" map M=smoke {
+  "M"
+}
+
+group "impact_ring" {
+  ocirc 0,0 4 impact
+  ocirc 0,0 2 impactHot
+  px 0,0 impactHot
+}
+
+layer "bg"
+fill 0,0 bg
+
+layer "floor"
+rect 0,18 40x6 floor
+line 0,18 39,18 #27314a
+
+layer "actors"
+# Caster silhouette
+rect 2,11 4x7 caster
+px 3,10 boltCore
+
+# Target silhouette
+rect 34,10 4x8 enemy
+px 35,9 36,9 impactHot
+
+frame 0 {
+  let x = 8
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 12
+  spread 5x3
+  drift -1x0
+  seed (90 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 4 spread 4x4 seed (200 + $frame)
+}
+
+frame 1 {
+  let x = 13
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 12
+  spread 5x3
+  drift -1x0
+  seed (90 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 4 spread 4x4 seed (200 + $frame)
+}
+
+frame 2 {
+  let x = 18
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 12
+  spread 5x3
+  drift -1x0
+  seed (90 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 5 spread 4x4 seed (200 + $frame)
+}
+
+frame 3 {
+  let x = 23
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 12
+  spread 5x3
+  drift -1x0
+  seed (90 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 5 spread 4x4 seed (200 + $frame)
+}
+
+frame 4 {
+  let x = 28
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 12
+  spread 5x3
+  drift -1x0
+  seed (90 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 6 spread 5x4 seed (200 + $frame)
+}
+
+frame 5 {
+  let x = 31
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 8 spread 4x3 drift -1x0 seed (90 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 8 spread 6x5 seed (200 + $frame)
+
+  layer "impact"
+  stamp "impact_ring" at ($x,$y)
+  glow ($x,$y) 4 impact
+  emit "shard" at ($x,$y) count 10 spread 8x6 seed (500 + $frame)
+  emit "spark" at ($x,$y) count 12 spread 10x8 seed (600 + $frame)
+
+  layer "actors"
+  px 34,11 35,11 36,11 37,11 impactHot
+}
+
+frame 6 {
+  let x = 31
+  let y = 12
+
+  layer "impact"
+  glow ($x,$y) 6 impact
+  stamp "impact_ring" at ($x,$y)
+  emit "shard" at ($x,$y) count 16 spread 12x9 seed (500 + $frame)
+  emit "spark" at ($x,$y) count 18 spread 12x9 seed (600 + $frame)
+  emit "smoke_dot" at ($x,$y) count 14 spread 10x7 seed (700 + $frame)
+
+  layer "actors"
+  px 34,10 35,10 36,10 37,10 impactHot
+  px 34,12 37,12 impactHot
+}
+
+frame 7 {
+  let x = 31
+  let y = 12
+
+  layer "impact"
+  glow ($x,$y) 3 smoke
+  emit "smoke_dot" at ($x,$y) count 18 spread 13x8 seed (700 + $frame)
+  emit "spark" at ($x,$y) count 8 spread 9x7 seed (600 + $frame)
+
+  layer "actors"
+  px 35,11 36,11 impactHot
+}

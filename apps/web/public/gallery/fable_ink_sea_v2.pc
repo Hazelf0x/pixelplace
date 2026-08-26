@@ -1,0 +1,272 @@
+## The Ink Sea (v2)
+## The world is a page: a ruled paper sky, a sketched sun, and below the
+## horizon a sea of spilled ink that holds the night. A giant fountain pen
+## stands nib-down at the horizon, still writing the sea; a paper boat
+## sails the ink while letters rise out of the water like fireflies.
+## Made by Claude Fable 5 - a fable being written.
+##
+## v2 showcases three authoring improvements over fable_ink_sea.txt:
+##   1. Expression radii: the nib ripple is ONE continuously growing ring
+##      (v1 faked it with four phased `every 16 offset K` blocks).
+##   2. `offset DX,DY { ... }` translation scopes: wave/wake/reflection
+##      clusters share one animated offset instead of per-coordinate math.
+##   3. `fade`: a gold falling star streaks into the ink once per loop,
+##      its trail dissolving through per-frame layer fade (and finishing
+##      before the loop wraps, so the trail state stays seamless).
+version 0.1
+canvas 80x56
+
+# --- paper world ---
+pal paper0=#f4ead2 paper1=#ead9b4 paper2=#ddc697
+pal+ ruleInk=#c9b68d55 marginInk=#c96a5a44 sketch=#262238
+# --- ink world ---
+pal+ inkHz=#3a3f75 ink2=#23264d ink1=#191b3a ink0=#101126
+pal+ inkHi=#5a60a8 inkLo=#262a55 starW=#fdfdff starG=#ffd98c
+# --- boat ---
+pal+ boatW=#fffaf0 boatSh=#d8cbb2 flagRed=#c8503e reflW=#fffaf022
+# --- pen ---
+pal+ barrel0=#4a1f2e barrel1=#6e2f3f barrelHi=#a05a62
+pal+ goldB=#d9a441 goldHi=#ffe6a3 metalM=#565a75 metalHi=#9aa0bd metalD=#2e2e38
+# --- light and motion ---
+pal+ sunRef=#ffd98c66 penGlow=#9fe9ff2a
+pal+ rip0=#9fe9ffcc rip1=#7f9fe288 rip2=#5566aa55
+pal+ moteInk=#26223899 moteGold=#ffd98cbb
+
+const horizonY = 30
+
+bitmap "seastar" map S=starW {
+  "S"
+}
+
+bitmap "glyph_o" map G=moteInk {
+  ".G."
+  "G.G"
+  ".G."
+}
+
+bitmap "glyph_i" map G=moteInk {
+  "G"
+  "."
+  "G"
+}
+
+bitmap "gold_spark" map G=moteGold {
+  "G"
+}
+
+# the boat is rigid, so it lives in a group and bobs as one stamp
+group "paper_boat" pivot 7,13 {
+  # sail with a soft shaded half and a fold line
+  poly 7,1 2,9 12,9 boatW
+  poly 7,1 12,9 7,9 boatSh
+  line 7,2 7,8 boatSh
+  line 7,1 2,9 sketch
+  line 7,1 12,9 sketch
+  # hull
+  poly 0,9 14,9 10,13 4,13 boatW
+  poly 7,9 14,9 10,13 7,13 boatSh
+  line 0,9 14,9 sketch
+  line 0,9 4,13 sketch
+  line 14,9 10,13 sketch
+  line 4,13 10,13 ink1
+  # little wax-red pennant
+  px 7,0 8,0 flagRed
+}
+
+# --- the page (sky) ---
+layer "sky"
+rect 0,0 80x10 paper0
+rect 0,10 80x10 paper1
+rect 0,20 80x10 paper2
+dither bayer at 0,8 80x4 paper0 paper1
+dither bayer at 0,18 80x4 paper1 paper2
+
+# ruled notebook lines and the red margin
+layer "page"
+line 0,6 79,6 ruleInk
+line 0,13 79,13 ruleInk
+line 0,20 79,20 ruleInk
+line 0,27 79,27 ruleInk
+line 10,0 10,29 marginInk
+
+# a sketched, slightly unfinished sun
+ocirc 66,9 4 sketch
+px 70,9 paper1
+line 66,2 66,3 sketch
+line 71,4 72,3 sketch
+line 73,9 75,9 sketch
+line 71,14 72,15 sketch
+line 66,15 66,16 sketch
+line 61,14 60,15 sketch
+line 59,9 57,9 sketch
+line 61,4 60,3 sketch
+
+# the last written words trail off toward the pen
+line 38,24 43,24 ruleInk
+line 45,23 48,23 ruleInk
+px 50,22 ruleInk
+
+# --- the ink sea ---
+layer "sea"
+rect 0,$horizonY 80x2 inkHz
+rect 0,32 80x6 ink2
+rect 0,38 80x8 ink1
+rect 0,46 80x10 ink0
+dither bayer at 0,32 80x2 inkHz ink2
+dither bayer at 0,37 80x2 ink2 ink1
+dither bayer at 0,45 80x2 ink1 ink0
+
+# the night lives in the ink: stars float in the sea
+layer "seastars"
+scatter "seastar" in 3,33 74x20 count 12 seed 502
+px 12,48 44,41 70,52 21,36 starG
+
+# --- the fountain pen, writing the sea ---
+layer "pen"
+rect 54,0 9x13 barrel1
+rect 54,0 2x13 barrel0
+rect 61,0 1x13 barrelHi
+rect 53,13 11x3 goldB
+px 62,13 63,14 goldHi
+poly 53,16 63,16 58,31 metalM
+line 54,17 57,28 metalHi
+line 62,17 59,28 metalD
+line 58,23 58,29 metalD
+px 58,21 metalD
+px 58,22 paper2
+
+timeline 0..47 {
+  each {
+    let swayX = lerp(-1, 1, sin01($t))
+    let bobY = lerp(-1.2, 1.2, sin01($t * 2))
+    let wA = lerp(-2, 2, sin01($t))
+    let wB = lerp(-2, 2, sin01($t + 0.33))
+    let wC = lerp(-2, 2, sin01($t + 0.66))
+    let pulse = lerp(3, 5, sin01($t * 3))
+    let boatX = 30 + $swayX
+    let boatY = 37 + $bobY
+
+    # the nib's soft light where it touches the ink
+    with layer "penlight" clear {
+      glow (58, 30) $pulse penGlow
+    }
+
+    # the falling star's trail dissolves a little every frame
+    with layer "starfall" {
+      fade 0.72
+    }
+
+    # one ripple ring per half-cycle, growing continuously from the nib
+    # (expression radii; ease-out so the ring decelerates as it spreads)
+    with layer "ripple" clear {
+      let rpA = (($frame % 16) / 16)
+      let rpB = ((($frame + 8) % 16) / 16)
+      let easeA = ($rpA * (2 - $rpA))
+      let easeB = ($rpB * (2 - $rpB))
+      oellipse 58,31 (2 + 11 * $easeA) x (1 + 2.2 * $easeA) rip1
+      oellipse 58,31 (2 + 11 * $easeB) x (1 + 2.2 * $easeB) rip2
+      px 58,31 rip0
+    }
+
+    # waves and reflections: three swell phases, one offset scope each
+    with layer "waves" clear {
+      offset ($wA),(0) {
+        line 6,34 11,34 inkHi
+        line 44,35 49,35 inkHi
+        line 18,51 24,51 inkLo
+        line 60,52 65,52 inkLo
+        px 65,40 sunRef
+      }
+      offset ($wB),(0) {
+        line 8,31 13,31 inkHi
+        line 57,33 57,36 ink1
+        line 63,33 68,33 sunRef
+        line 14,39 19,39 inkLo
+        line 34,40 39,40 inkLo
+        line 68,41 73,41 inkLo
+      }
+      offset ($wC),(0) {
+        line 30,31 34,31 inkHi
+        line 59,34 59,38 ink1
+        line 64,36 67,36 sunRef
+        line 8,45 14,45 inkLo
+        line 28,47 33,47 inkLo
+        line 52,46 58,46 inkLo
+      }
+    }
+
+    # the paper boat rides the swell as one piece
+    with layer "boat" clear {
+      stamp "paper_boat" at ($boatX, $boatY) :pivot
+      offset ($wA),($bobY) {
+        line 16,39 22,39 inkHi
+      }
+      offset ($wB),(0) {
+        line 12,41 17,41 inkLo
+      }
+      offset ($swayX),($bobY) {
+        px 27,40 30,41 33,40 reflW
+      }
+    }
+
+    # letters rise from the ink around the pen and drift into the page
+    with layer "motes" clear {
+      emit "glyph_o" at 58,24 count 5 spread 12x16 time $frame vel 0x-1 jitter 1x1 life 22 loop 48 fade seed 41
+      emit "glyph_i" at 56,20 count 4 spread 14x14 time $frame vel 0x-1 jitter 1x1 life 26 loop 48 fade seed 73
+      # gold dust in the boat's wake
+      emit "gold_spark" at ($boatX - 9, $boatY + 2) count 5 spread 8x3 time $frame vel -1x0 jitter 1x1 life 14 loop 48 fade seed 88
+    }
+  }
+
+  # once per loop, a wax-gold star falls from the page into the ink...
+  range 4..20 {
+    with layer "starfall" {
+      px (14 + 2 * $localFrame),(4 + 1.6 * $localFrame) goldB
+      px (15 + 2 * $localFrame),(4 + 1.6 * $localFrame) starG
+      glow (15 + 2 * $localFrame, 4 + 1.6 * $localFrame) 2 sunRef
+    }
+  }
+
+  # ...and lands with a small gold splash that fades on its own
+  at 21 {
+    with layer "starfall" {
+      px 45,30 47,30 starG
+      px 46,29 goldB
+      glow (46, 30) 3 sunRef
+    }
+  }
+
+  # sea-stars twinkle in the ink
+  every 8 offset 0 {
+    with layer "twinkle" clear {
+      glow 12,48 2 sunRef
+      glow 63,35 2 penGlow
+      px 12,48 63,35 starW
+    }
+  }
+  every 8 offset 4 {
+    with layer "twinkle" clear {
+      glow 34,50 2 sunRef
+      glow 70,52 2 penGlow
+      px 34,50 70,52 starW
+    }
+  }
+
+  # ink birds cross the paper sky
+  every 12 offset 0 {
+    with layer "birds" clear {
+      px 18,8 20,8 sketch
+      px 19,9 sketch
+      px 26,5 28,5 sketch
+      px 27,6 sketch
+    }
+  }
+  every 12 offset 6 {
+    with layer "birds" clear {
+      px 18,9 20,9 sketch
+      px 19,9 sketch
+      px 26,6 28,6 sketch
+      px 27,6 sketch
+    }
+  }
+}

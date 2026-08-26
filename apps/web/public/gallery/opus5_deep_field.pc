@@ -1,0 +1,115 @@
+## Deep Field
+## A seamless infinite zoom: arches receding forever, and someone standing at the near end.
+## The centre is never resolved — detail only exists once you have arrived at it.
+##
+## Showcases: true Droste-style looping zoom via self-similar scaling about one point,
+##   quadratic approximation of exponential growth (velocity-continuous at the wrap),
+##   depth painted by a STATIC overlay so the moving geometry can stay period-1 seamless,
+##   and relative-position lamps that ride the zoom for free.
+##
+## Loop math (the interesting part):
+##   Rings sit at half-width w_k = 0.60 * 1.5^k. Every frame all rings scale by s(t) =
+##   1.5^t. Because s(1) == 1.5 exactly, at the end of the loop ring k occupies precisely
+##   the slot ring k+1 started in — so the last frame is identical to the first, PROVIDED
+##   every ring is drawn identically. That "provided" is why the tunnel is uniform and all
+##   the depth shading lives in a separate static layer, and it is why the arches are a
+##   single `repeat` rather than hand-written rings: uniformity is a correctness property
+##   here, not a style preference.
+version 0.1
+canvas 64x48
+
+# stone and void
+# wall and deep are deliberately identical: the outermost arch is wider than the
+# canvas, so any difference between them shows up as a hard horizontal seam at the
+# springing line rather than as depth.
+pal deep=#0b0a14 wall=#0b0a14 rim=#57507e rimlit=#a99ecb
+pal+ lamp=#ffd79a lampglow=#ffb35c2e
+# depth is painted, not modelled
+pal+ warm=#ffc98426 warmcore=#ffd9a02e cool=#5d7fb322 vig=#05040a99
+# the near end
+pal+ fig=#04030a figrim=#8d80b8 figwarm=#c9a271 mote=#ffd79a55
+pal+ pool=#ffc98418
+
+bitmap "mote" map M=mote {
+  "M"
+}
+
+# --- layer order: tunnel (back) -> shade -> dust -> near (front) ---
+layer "tunnel"
+layer "shade"
+layer "dust"
+layer "near"
+
+# --- static depth wash -------------------------------------------------------
+# The corridor geometry is deliberately uniform so the zoom can loop perfectly.
+# Everything that makes it read as DEPTH is painted here, once, and never moves.
+with layer "shade" {
+  glow 32,22 30 cool
+  glow 32,22 20 warm
+  glow 32,22 9 warmcore
+  # the unresolved centre: not dark, just not decided yet — a haze, not a shape
+  glow 32,22 5 warmcore
+  glow 32,22 3 warmcore
+  glow 32,22 2 lampglow
+  # a little light falls on the near floor, where the figure is standing
+  glow 24,47 14 pool
+  # vignette, pulled in from the corners
+  glow 0,0 34 vig
+  glow 63,0 34 vig
+  glow 0,47 34 vig
+  glow 63,47 34 vig
+}
+
+# --- the near end ------------------------------------------------------------
+# Someone small, facing in. Gives the whole thing a scale and a reason.
+with layer "near" {
+  # coat, shoulders, head — read from behind, at the mouth of the corridor
+  poly 20,48 21,40 27,40 28,48 fig
+  ellipse 24,40 4x2 fig
+  rect 23,36 3x2 fig
+  circ 24,34 2 fig
+  # the light is deep and slightly up-right, so the rim falls on that edge
+  px 26,33 26,34 27,39 28,42 28,45 figrim
+  px 25,32 26,35 figwarm
+}
+
+# --- the corridor ------------------------------------------------------------
+timeline 0..23 {
+  each {
+    # tt runs 0..23/24, never reaching 1, so no frame is drawn twice.
+    let tt = $frame / 24
+    let s = pow(1.5, $tt)
+
+    with layer "tunnel" clear {
+      rect 0,0 64x48 wall
+
+      # One arch, twelve times, largest first so nearer arches are overpainted by
+      # the deeper ones showing through their opening.
+      #   pow(1.5, 11 - $i) walks the rings outermost -> innermost
+      #   pow(1.5, $tt)     slides the whole set exactly one slot per loop
+      # Per arch: springing curve, clear the interior, then jambs and threshold,
+      # then a lamp pinned to a fixed FRACTION of the arch so it rides the zoom
+      # outward for free. Every ring gets every mark — that uniformity is what
+      # buys the seamless loop.
+      repeat 12 {
+        let w = 0.6 * pow(1.5, (11 - $i)) * $s
+
+        oellipse (32, 22) ($w)x($w * 0.82) rim
+        rect (32 - $w),(22) (2 * $w)x($w * 0.90) deep
+        line (32 - $w),(22) (32 - $w),(22 + $w * 0.90) rim
+        line (32 + $w),(22) (32 + $w),(22 + $w * 0.90) rim
+        line (32 - $w),(22 + $w * 0.90) (32 + $w),(22 + $w * 0.90) rimlit
+
+        glow (32 + $w * 0.70, 22 - $w * 0.44) ($w * 0.30) lampglow
+        px (32 + $w * 0.70, 22 - $w * 0.44) lamp
+        glow (32 - $w * 0.72, 22 + $w * 0.56) ($w * 0.26) lampglow
+        px (32 - $w * 0.72, 22 + $w * 0.56) lamp
+      }
+    }
+
+    # Dust drifting out of the deep, the only thing that isn't geometry.
+    with layer "dust" clear {
+      emit "mote" at 32,22 count 14 spread 40x28 time $frame vel 0x0 jitter 1x1 life 24 loop 24 fade seed 41
+    }
+  }
+}

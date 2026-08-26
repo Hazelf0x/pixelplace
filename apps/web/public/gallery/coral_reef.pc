@@ -1,0 +1,308 @@
+# Coral Reef - Underwater Scene
+# A vibrant coral reef with tropical fish, bubbles, and ocean depth
+canvas 48x48
+
+# === PALETTE ===
+# Low indices for bitmaps (0-9, a-f)
+pal sand=#d4a463 coral_d=#a83240 coral=#e85070 coral_l=#ff90a8 glow=#ffe0b0 white=#f0f0f0 eye=#101020 fin_d=#1858a0 fin=#3090d8 fin_l=#58c0f0
+
+# a=10 b=11 c=12 d=13 e=14 f=15
+pal kelp_d=#184828 kelp=#287838 shell=#e0c890 shell_d=#b09060 tenta=#c050c0 yellow=#f0d040
+
+# Ocean depth gradient
+pal depth=#020818..#0848a0 steps 6
+
+# Scene colors
+pal seafloor=#806030 seafloor_dk=#604020 rock=#505060 rock_lt=#707880
+pal bubble=#80c8ff60 bubble_hi=#d0f0ff90
+pal aura_coral=#ff506040 aura_blue=#3090d860 aura_green=#40c88040
+pal sand_lt=#e8c888 ripple=#1060b830
+
+# === VARIABLES ===
+let floor_y = 36
+let mid_y = 20
+
+# === ANCHORS ===
+anchor chest_pos 22,34
+anchor anemone_pos 34,30
+
+# === BITMAPS ===
+bitmap "fish_r" {
+  "..899."
+  ".89998"
+  "899998"
+  ".89998"
+  "..899."
+}
+
+bitmap "fish_sm" {
+  ".89"
+  "899"
+  ".89"
+}
+
+bitmap "clownfish" {
+  "..f5f."
+  ".f5f5f"
+  "f5f5f5"
+  ".f5f5f"
+  "..f5f."
+}
+
+bitmap "coral_branch" {
+  "..2.."
+  ".232."
+  ".232."
+  "23132"
+  "23132"
+  ".222."
+  ".222."
+  "22122"
+}
+
+bitmap "coral_fan" {
+  "..2.2.."
+  ".23.32."
+  ".23.32."
+  "232.232"
+  "232.232"
+  ".22322."
+  "..222.."
+}
+
+bitmap "seaweed" {
+  ".b."
+  "b.."
+  ".b."
+  "..b"
+  ".b."
+  "b.."
+  ".b."
+  "b.."
+}
+
+bitmap "seaweed_sm" {
+  "b."
+  ".b"
+  "b."
+  ".b"
+}
+
+bitmap "bubble" {
+  ".55."
+  "5..5"
+  "5..5"
+  ".55."
+}
+
+bitmap "bubble_sm" {
+  "5."
+  ".5"
+}
+
+bitmap "starfish" {
+  "..0..0.."
+  "..0..0.."
+  ".00..00."
+  "00.00.00"
+  "..0000.."
+  ".00..00."
+  ".0....0."
+}
+
+bitmap "shell_bm" {
+  ".cd."
+  "cddc"
+  ".cc."
+}
+
+bitmap "chest_front" {
+  "666666"
+  "600006"
+  "600006"
+  "666666"
+}
+
+bitmap "chest_lid" {
+  ".6666."
+  "666666"
+}
+
+bitmap "anemone_top" {
+  "e.e.e.e"
+  ".e.e.e."
+  "e.e.e.e"
+}
+
+bitmap "anemone_base" {
+  ".eee."
+  "eeeee"
+  "eeeee"
+}
+
+bitmap "tiny_fish" {
+  "69"
+  "96"
+}
+
+# === GROUPS ===
+group "coral_cluster" {
+  stamp "coral_branch" at 0,0
+  stamp "coral_branch" at 8,2 :flipx
+  stamp "coral_fan" at 3,4
+  circ 6,6 5 aura_coral
+}
+
+group "treasure" {
+  stamp "chest_front" at 0,2
+  stamp "chest_lid" at 0,0
+  # gold spill
+  px 0,5 1,6 glow
+  px 6,5 5,6 glow
+  px 2,6 4,6 glow
+  # glow around chest
+  circ 3,3 5 aura_coral
+}
+
+group "anemone" {
+  stamp "anemone_base" at 1,4
+  stamp "anemone_top" at 0,0
+  stamp "anemone_top" at 0,2
+  circ 4,4 4 aura_green
+}
+
+group "seaweed_tall" {
+  stamp "seaweed" at 0,0
+  stamp "seaweed" at 2,2
+  stamp "seaweed_sm" at 1,10
+}
+
+# === OCEAN DEPTH (background gradient) ===
+layer "ocean"
+rect 0,0 48x8 depth0
+rect 0,8 48x8 depth1
+rect 0,16 48x8 depth2
+rect 0,24 48x8 depth3
+rect 0,32 48x8 depth4
+rect 0,40 48x8 depth5
+
+# Subtle light ripples from surface
+rect 4,0 3x1 ripple
+rect 14,1 5x1 ripple
+rect 28,0 4x1 ripple
+rect 38,1 6x1 ripple
+rect 10,2 3x1 ripple
+rect 22,1 3x1 ripple
+
+# === SEAFLOOR ===
+layer "floor"
+rect 0,$floor_y 48x12 seafloor
+rect 0,($floor_y - 1) 48x1 seafloor_dk
+
+# Sand highlights
+push
+color sand_lt
+px 4,($floor_y + 1) 12,($floor_y + 2) 20,$floor_y 28,($floor_y + 1)
+px 36,($floor_y + 2) 42,$floor_y 8,($floor_y + 3) 30,($floor_y + 3)
+pop
+
+# Rocks
+rect 0,($floor_y + 2) 5x3 rock
+rect 2,($floor_y + 1) 3x1 rock_lt
+rect 40,($floor_y + 3) 6x2 rock
+rect 42,($floor_y + 2) 3x1 rock_lt
+
+# Scattered shells
+stamp "shell_bm" at 14,($floor_y + 1)
+stamp "shell_bm" at 32,($floor_y + 2) :flipx
+stamp "shell_bm" at 24,($floor_y + 3)
+
+# Starfish
+stamp "starfish" at 6,$floor_y
+
+# === BACK SEAWEED ===
+layer "back_plants"
+stamp "seaweed_tall" at 2,22
+stamp "seaweed_tall" at 44,20
+stamp "seaweed_tall" at 10,24
+stamp "seaweed_tall" at 38,22
+stamp "seaweed_sm" at 16,($floor_y - 3)
+stamp "seaweed_sm" at 30,($floor_y - 4)
+
+# === CORAL LAYER ===
+layer "coral"
+
+# Left coral cluster
+stamp "coral_cluster" at 4,26
+
+# Right coral - individual branches
+stamp "coral_branch" at 36,28
+stamp "coral_fan" at 28,30
+stamp "coral_branch" at 42,26 :flipx
+
+# Small coral accents
+stamp "coral_branch" at 20,30 :flipx
+
+# Coral glow
+circ 8,30 4 aura_coral
+circ 38,30 3 aura_coral
+circ 30,33 3 aura_coral
+
+# === ANEMONE ===
+layer "anemone_layer"
+stamp "anemone" at anemone_pos
+
+# === TREASURE CHEST ===
+layer "chest_layer"
+stamp "treasure" at chest_pos
+
+# === FISH ===
+layer "fish"
+
+# Big fish swimming right (mid-water)
+stamp "fish_r" at 6,14
+stamp "fish_r" at 30,10
+
+# Big fish swimming left (flipped)
+stamp "fish_r" at 20,18 :flipx
+
+# Small fish school (upper water)
+stamp "fish_sm" at 12,6
+stamp "fish_sm" at 16,8
+stamp "fish_sm" at 14,10
+stamp "fish_sm" at 10,9
+
+# Clownfish near anemone
+stamp "clownfish" at 32,26
+stamp "clownfish" at 38,28 :flipx
+
+# Tiny fish scattered deep
+scatter "tiny_fish" in 4,20 40x12 count 8 seed 42
+
+# === BUBBLES ===
+layer "bubbles"
+
+# Rising bubble columns
+stamp "bubble" at 16,12
+stamp "bubble" at 18,8
+stamp "bubble" at 17,4
+
+stamp "bubble" at 34,16
+stamp "bubble" at 36,12
+stamp "bubble" at 35,8
+
+# Scattered small bubbles
+scatter "bubble_sm" in 4,2 40x30 count 25 seed 99
+
+# Bubble highlights
+push
+color bubble_hi
+px 16,12 18,7 34,15 35,7
+pop
+
+# === LIGHT RAYS ===
+layer "light"
+# Diagonal light shafts from surface
+rect 10,0 2x20 ripple
+rect 24,0 3x24 ripple
+rect 38,0 2x16 ripple

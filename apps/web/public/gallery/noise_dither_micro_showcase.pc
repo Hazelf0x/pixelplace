@@ -1,0 +1,18 @@
+canvas 24x16
+pal bg=#08111b mist=#103047 mistHi=#1a4f73 stone=#28323f moss=#3d5c45 spark=#7ee7ff glow=#c7f5ff
+
+# Atmospheric base with deterministic dither fields.
+dither bayer at 0,0 24x16 bg mist seed 2
+dither noise at 0,8 24x8 mist mistHi seed 17
+
+# Spark band: positions come from deterministic noise01 samples.
+repeat 20 {
+  let x = lerp(1, 22, noise01($i, 0, 91))
+  let y = lerp(1, 6, noise01($i, 3, 33))
+  px ($x, $y) spark
+}
+
+# Foreground structure and haze.
+rect 0,12 24x4 stone
+dither checker at 0,11 24x2 moss stone seed 1
+glow 12,10 4 #c7f5ff88

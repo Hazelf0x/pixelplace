@@ -1,0 +1,102 @@
+## Star Whale Drift
+## A whale made of constellations, drifting through a quiet nebula.
+## Showcases: expression-driven sprite motion, timeline loop, breathing glow,
+##   deterministic stardust particles, and layered palette storytelling.
+version 0.1
+canvas 64x40
+
+pal void0=#0a0a1f void1=#131334 void2=#1c1f4a void3=#26345f
+pal+ body=#13385e belly=#256a96 rim=#9fe9ff
+pal+ starW=#fdfdff starG=#ffe3a0 cline=#7fdfff44
+pal+ neb1=#6b3a8c22 neb2=#c84f9e1a halo=#2a5a8c2a eyeglow=#ffe3a066
+pal+ mote=#9fe9ff55
+
+bitmap "mote" map M=mote {
+  "M"
+}
+
+# --- static deep sky ---
+layer "sky"
+rect 0,0 64x10 void0
+rect 0,10 64x10 void1
+rect 0,20 64x10 void2
+rect 0,30 64x10 void3
+dither bayer at 0,8 64x4 void0 void1
+dither bayer at 0,18 64x4 void1 void2
+dither bayer at 0,28 64x4 void2 void3
+
+# static far starfield
+layer "bg"
+px 4,4 14,3 22,6 48,5 58,8 60,3 starW
+px 9,33 55,11 50,35 6,21 18,8 38,4 starG
+
+# static nebula
+layer "neb"
+glow 12,9 13 neb1
+glow 52,28 15 neb2
+glow 30,35 16 neb1
+
+timeline 0..47 {
+  each {
+    let ox = lerp(-2, 2, sin01($t))
+    let oy = lerp(-1.5, 1.5, cos01($t))
+    let breath = lerp(0, 3, sin01($t))
+
+    # nebula breathing softly behind the whale
+    with layer "breath" clear {
+      glow (30 + $ox, 18 + $oy) (16 + $breath) halo
+    }
+
+    # the whale itself, drawn directly so it drifts as one body
+    with layer "whale" clear {
+      ellipse (30 + $ox, 18 + $oy) 13x7 body
+      ellipse (39 + $ox, 18 + $oy) 8x6 body
+      ellipse (34 + $ox, 19 + $oy) 10x5 body
+      poly (19 + $ox),(18 + $oy) (8 + $ox),(11 + $oy) (16 + $ox),(18 + $oy) body
+      poly (19 + $ox),(19 + $oy) (8 + $ox),(26 + $oy) (16 + $ox),(19 + $oy) body
+      poly (31 + $ox),(24 + $oy) (26 + $ox),(29 + $oy) (35 + $ox),(24 + $oy) body
+      ellipse (33 + $ox, 21 + $oy) 10x3 belly
+
+      # moonlit rim along the back
+      px (45 + $ox),(15 + $oy) (42 + $ox),(13 + $oy) (38 + $ox),(12 + $oy) (33 + $ox),(11 + $oy) (27 + $ox),(12 + $oy) (22 + $ox),(14 + $oy) (19 + $ox),(16 + $oy) (47 + $ox),(18 + $oy) rim
+
+      # constellation tracing the spine
+      line (20 + $ox),(15 + $oy) (27 + $ox),(12 + $oy) cline
+      line (27 + $ox),(12 + $oy) (34 + $ox),(11 + $oy) cline
+      line (34 + $ox),(11 + $oy) (41 + $ox),(13 + $oy) cline
+      line (41 + $ox),(13 + $oy) (43 + $ox),(16 + $oy) cline
+      px (20 + $ox),(15 + $oy) (27 + $ox),(12 + $oy) (34 + $ox),(11 + $oy) (41 + $ox),(13 + $oy) starW
+      px (8 + $ox),(11 + $oy) (8 + $ox),(26 + $oy) starW
+      px (43 + $ox),(16 + $oy) starG
+      glow (43 + $ox, 16 + $oy) 3 eyeglow
+    }
+
+    # stardust trailing off the flukes
+    with layer "dust" clear {
+      emit "mote" at (8 + $ox, 18 + $oy) count 10 spread 5x10 time $frame vel -1x0 jitter 1x1 life 16 loop 48 fade seed 77
+    }
+  }
+
+  # twinkles, three clusters rotating through the loop
+  every 6 offset 0 {
+    with layer "twinkle" clear {
+      glow 14,3 2 eyeglow
+      glow 48,5 2 eyeglow
+      px 14,3 48,5 9,33 starW
+    }
+  }
+  every 6 offset 2 {
+    with layer "twinkle" clear {
+      glow 58,8 2 eyeglow
+      glow 22,6 2 eyeglow
+      px 58,8 22,6 50,35 starW
+    }
+  }
+  every 6 offset 4 {
+    with layer "twinkle" clear {
+      glow 60,3 2 eyeglow
+      glow 38,4 2 eyeglow
+      px 60,3 6,21 38,4 starW
+    }
+  }
+}

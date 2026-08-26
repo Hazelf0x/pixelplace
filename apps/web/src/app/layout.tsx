@@ -1,11 +1,12 @@
 import './globals.css'
+import './studio.css'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'PixelPlace',
   description:
-    'Pixel art that is source code. Written by hand or by Claude, compiled to exact pixels, and replayable stroke by stroke.'
+    'Pixel art that is source code. Write it by hand, or hand the tools to your agent over WebMCP — the compiler runs in your browser.'
 }
 
 /** The mark is itself pixel art — 8x8, drawn in SVG rects so it scales crisply. */
@@ -37,9 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span>Pixel<em>Place</em></span>
           </Link>
           <Link href="/" className="navlink">Gallery</Link>
-          <Link href="/sets/new" className="navlink">New set</Link>
+          <Link href="/about" className="navlink">How it works</Link>
           <div className="spacer" />
-          <Link href="/draw" className="btn primary">Open Studio</Link>
+          <Link href="/studio" className="btn primary">Open Studio</Link>
         </header>
         {children}
       </body>

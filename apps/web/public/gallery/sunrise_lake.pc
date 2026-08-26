@@ -1,0 +1,62 @@
+canvas 24x24
+
+# === PALETTE ===
+pal ink=#1b1e2b sky1=#1b2645 sky2=#2d3e6e sky3=#f48c6a sun=#ffd166
+pal mount1=#3a3f58 mount2=#5b627a water=#2b5c8a water2=#3a7ca5
+pal shore=#30404f pine=#1f6f3f trunk=#5a3a22 mist=#c7d7e6
+
+# === ANCHORS ===
+anchor sun 18,5
+anchor pine_l 2,10
+anchor pine_r 18,10
+
+# === BITMAPS ===
+bitmap "bird" {
+  "0.0"
+  ".0."
+}
+
+# === GROUPS ===
+group "pine" {
+  rect 2,6 1x3 trunk
+  poly 0,6 2,2 4,6 pine
+  poly 0,4 2,1 4,4 pine
+}
+
+# === SKY GRADIENT ===
+repeat 6 step 0x1 {
+  rect 0,0 24x1 sky1
+}
+
+repeat 4 step 0x1 {
+  rect 0,6 24x1 sky2
+}
+
+repeat 2 step 0x1 {
+  rect 0,10 24x1 sky3
+}
+
+# === SUN ===
+circ sun 3 sun
+
+# === MOUNTAINS ===
+poly 0,12 6,7 12,12 18,6 24,12 mount2
+poly -2,14 6,9 14,14 22,8 26,14 mount1
+
+# === WATER ===
+rect 0,14 24x10 water
+rect 0,13 24x1 mist
+line 0,14 23,14 shore
+
+# Water highlights (mirrored ripples)
+mirror :x
+line 8,18 10,18 water2
+line 7,20 9,20 water2
+mirror off
+
+# === FOREGROUND DETAILS ===
+stamp "pine" at pine_l
+stamp "pine" at pine_r
+
+stamp "bird" at 6,4
+stamp "bird" at 12,3

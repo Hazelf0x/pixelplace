@@ -1,0 +1,216 @@
+canvas 64x48
+
+# === PALETTE ===
+# Low indices for bitmap sprites (0-4)
+pal trunk=#3d2817 leafdk=#0d3a0d leaf=#1d5a1d leaflt=#3d8a3a white=#ffffff
+# Sky gradient (5-10)
+pal sky=#0b0d2e..#162d5a steps 6
+# Scene colors (11+)
+pal moon=#fff5d4 moonglow=#ffe8a0
+pal mtn=#1e2040 mtndk=#121430 mtnlt=#2a2d55 snow=#8899bb
+pal wall=#4a4a5e walldk=#363645 walllt=#5c5c72 roof=#6b3010
+pal water=#081828..#163858 steps 4
+pal cliff=#2a2a1a ground=#1a2010 grass=#2d4a1a
+pal gate=#0a0a15 winlit=#ffdd44 torch=#ff8844 flagred=#cc2222
+
+# === POSITIONS ===
+let cx = 20
+let cw = 24
+let cy = 14
+let tw = 6
+let lake = 33
+let shore = 41
+
+# === BITMAPS ===
+bitmap "dot" { "4" }
+bitmap "sparkle" {
+  ".4."
+  "444"
+  ".4."
+}
+bitmap "twinkle" {
+  "4.4"
+  ".4."
+  "4.4"
+}
+bitmap "tree" {
+  "..2.."
+  ".232."
+  "23132"
+  ".212."
+  "21312"
+  ".121."
+  "..0.."
+  "..0.."
+}
+bitmap "pine" {
+  "..2.."
+  ".222."
+  "..2.."
+  ".222."
+  "22222"
+  "..0.."
+  "..0.."
+}
+bitmap "bigtree" {
+  "...22..."
+  "..2332.."
+  ".213312."
+  "21133112"
+  ".213312."
+  "21133112"
+  "..1001.."
+  "..0..0.."
+}
+bitmap "bush" {
+  ".22."
+  "2132"
+  ".22."
+}
+bitmap "vane" {
+  "..4"
+  "444"
+  "..4"
+}
+
+# === GROUPS ===
+group "lantern" {
+  orect 0,0 2x3 walllt
+  px 0,1 1,1 winlit
+}
+
+# --- SKY ---
+layer "sky"
+rect 0,0 64x5 sky0
+rect 0,5 64x5 sky1
+rect 0,10 64x5 sky2
+rect 0,15 64x5 sky3
+rect 0,20 64x5 sky4
+rect 0,25 64x3 sky5
+
+scatter "dot" in 0,0 64x25 count 40 seed 42
+scatter "sparkle" in 2,1 58x16 count 5 seed 17
+scatter "twinkle" in 4,0 56x12 count 2 seed 99
+
+circ 52,8 5 sky3
+circ 52,8 4 moonglow
+circ 52,8 3 moon
+circ 53,7 2 white
+px 50,9 51,10 moonglow
+
+# --- MOUNTAINS ---
+layer "mountains"
+poly 0,28 8,17 16,28 mtndk
+poly 8,28 20,13 32,28 mtn
+poly 24,28 38,10 52,28 mtnlt
+poly 44,28 56,15 64,22 64,28 mtn
+line 8,17 12,20 snow
+line 20,13 24,16 snow
+line 38,10 42,14 snow
+line 56,15 59,18 snow
+
+# --- GROUND ---
+layer "ground"
+rect 0,28 64x20 ground
+rect 17,30 30x3 cliff
+px 19,31 25,32 31,31 37,32 43,31 walldk
+
+# --- WATER ---
+layer "water"
+rect 0,$lake 64x1 water0
+rect 0,($lake+1) 64x2 water1
+rect 0,($lake+3) 64x2 water2
+rect 0,($lake+5) 64x2 water3
+rect 0,($lake+7) 64x1 water0
+px 50,($lake+1) 52,($lake+2) 51,($lake+3) 53,($lake+4) 52,($lake+5) moonglow
+px 49,($lake+3) 54,($lake+3) moonglow
+px 8,($lake+2) 18,($lake+4) 28,($lake+1) 38,($lake+3) 60,($lake+2) sky4
+
+# --- CASTLE ---
+layer "castle"
+rect $cx,$cy 24x16 wall
+rect ($cx+1,$cy+1) 22x14 walldk
+
+repeat 6 step 4x0 {
+  rect ($cx + $i*4,$cy - 2) 2x2 wall
+}
+
+# Left tower
+let lx = $cx - 2
+let ly = $cy - 6
+rect $lx,$ly 6x22 wall
+rect ($lx+1,$ly+1) 4x20 walldk
+poly $lx,$ly ($lx+3,$ly-4) ($lx+$tw,$ly) roof
+
+# Right tower
+let rx = $cx + $cw - 4
+let ry = $cy - 6
+rect $rx,$ry 6x22 wall
+rect ($rx+1,$ry+1) 4x20 walldk
+poly $rx,$ry ($rx+3,$ry-4) ($rx+$tw,$ry) roof
+
+px $lx,$ly ($lx+$tw-1,$ly) walllt
+px $rx,$ry ($rx+$tw-1,$ry) walllt
+
+# Gate
+let gx = $cx + 9
+let gy = $cy + 10
+rect $gx,$gy 6x6 gate
+rect ($gx+1,$gy+1) 4x5 #080810
+px ($gx+2,$gy-1) ($gx+3,$gy-1) walldk
+
+# Windows
+px ($cx+4,$cy+4) ($cx+4,$cy+5) winlit
+px ($cx+$cw-5,$cy+4) ($cx+$cw-5,$cy+5) winlit
+px ($lx+2,$cy-2) ($lx+3,$cy-2) winlit
+px ($rx+2,$cy-2) ($rx+3,$cy-2) winlit
+px ($lx+2,$cy+3) ($lx+3,$cy+3) winlit
+px ($rx+2,$cy+3) ($rx+3,$cy+3) winlit
+
+# Gate lanterns
+stamp "lantern" at ($gx-2,$gy-2)
+stamp "lantern" at ($gx+6,$gy-2)
+
+# Flags
+line ($lx+3,$ly-4) ($lx+3,$ly-7) walldk
+px ($lx+4,$ly-7) ($lx+5,$ly-7) ($lx+4,$ly-6) flagred
+line ($rx+3,$ry-4) ($rx+3,$ry-7) walldk
+px ($rx+4,$ry-7) ($rx+5,$ry-7) ($rx+4,$ry-6) flagred
+
+# Weather vanes (rotation!)
+stamp "vane" at ($lx+1,$ly-8)
+stamp "vane" at ($rx+2,$ry-8) :rot180
+
+# Wall texture
+px ($cx+3,$cy+2) ($cx+8,$cy+3) ($cx+14,$cy+2) ($cx+19,$cy+3) walllt
+px ($cx+5,$cy+7) ($cx+11,$cy+6) ($cx+17,$cy+7) walllt
+
+# --- TREES ---
+layer "trees"
+stamp "bigtree" at 2,20
+stamp "pine" at 11,22
+stamp "tree" at 7,23
+stamp "tree" at 13,23 :flipx
+stamp "pine" at 53,21
+stamp "bigtree" at 57,20
+stamp "tree" at 51,23
+stamp "tree" at 61,22 :flipx
+
+stamp "bigtree" at 1,($shore-1)
+stamp "pine" at 10,$shore
+stamp "tree" at 56,$shore
+stamp "bigtree" at 59,($shore-1) :flipx
+
+# --- FOREGROUND ---
+layer "foreground"
+rect 0,$shore 64x7 ground
+
+push
+mirror :x
+px 2,$shore 6,$shore 10,$shore 15,$shore 20,$shore 25,$shore 30,$shore grass
+pop
+
+scatter "bush" in 1,($shore+2) 24x4 count 4 seed 33
+scatter "bush" in 39,($shore+2) 24x4 count 4 seed 77
+
+px 15,($shore+3) 48,($shore+4) torch

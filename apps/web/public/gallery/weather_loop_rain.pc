@@ -1,0 +1,97 @@
+## Weather Loop Rain
+## A calm rooftop rain loop suitable for scene ambience or UI backdrops
+## Showcases: timeline layering, deterministic rain rhythm, mist drift, simple reflective motion
+version 0.1
+canvas 48x32
+
+pal :dawnbringer16
+pal+ skyTop=#08111d skyMid=#11203a cloud=#1d2e4f cloudHi=#2b4472
+pal+ building=#1a2030 roof=#111520 trim=#394a69 windowOn=#ffcf7b windowGlow=#ffcf7b22
+pal+ rainFar=#6d9fd8 rainNear=#b8d8ff mist=#b8d8ff22 puddle=#17324f puddleHi=#4f79a8
+pal+ plant=#214234 plantHi=#3b6a50
+
+anchor lantern 11,18
+
+bitmap "rain_far_dot" map R=rainFar {
+  "R"
+}
+
+bitmap "rain_near_dot" map R=rainNear {
+  "R."
+  ".R"
+}
+
+bitmap "mist_dot" map M=mist {
+  "M"
+}
+
+group "roof_lantern" {
+  rect -1,-5 2x5 trim
+  rect -2,-7 4x2 trim
+  glow 0,-6 3 windowGlow
+  px 0,-6 windowOn
+}
+
+layer "sky"
+rect 0,0 48x10 skyTop
+rect 0,10 48x8 skyMid
+rect 0,18 48x6 cloud
+line 0,13 47,13 cloudHi
+
+layer "city"
+poly 0,20 6,16 12,18 18,14 24,17 31,13 38,16 47,12 47,24 0,24 building
+rect 0,24 48x3 building
+rect 0,27 48x5 roof
+line 0,24 47,24 trim
+rect 6,18 4x4 windowOn
+rect 20,16 4x5 windowOn
+rect 35,17 3x4 windowOn
+glow 8,20 3 windowGlow
+glow 22,18 4 windowGlow
+glow 36,19 3 windowGlow
+
+layer "foreground"
+stamp "roof_lantern" at lantern :center
+rect 0,28 48x4 roof
+ellipse 13,29 10x2 puddle
+ellipse 34,30 14x2 puddle
+arc 34,30 12 210 330 puddleHi
+rect 39,23 4x5 plant
+px 40,22 41,21 42,22 plantHi
+
+timeline 0..23 {
+  each {
+    let wind = lerp(-2, 2, sin01($t + 0.15))
+    let drift = lerp(-1, 2, cos01($t + 0.35))
+    let shimmer = lerp(0, 2, sin01($t * 2))
+
+    layer "rain_far"
+    clear
+    emit "rain_far_dot" at ($centerX + $wind, -6) count 70 spread 62x30 time $frame vel -1x2 jitter 1x1 loop 24 seed 401
+
+    layer "rain_near"
+    clear
+    emit "rain_near_dot" at ($centerX + $wind, -8) count 100 spread 66x34 time $frame vel -2x3 jitter 2x1 loop 24 seed 733
+
+    layer "mist"
+    clear
+    emit "mist_dot" at ($centerX + $drift, 27) count 14 spread 32x2 time $frame vel 1x0 jitter 2x0 life 14 fade seed 911
+
+    layer "ripples"
+    clear
+    arc (13, 29) (3 + $shimmer) 205 335 puddleHi
+    arc (34, 30) (4 + $shimmer) 205 335 puddleHi
+
+    layer "splashes"
+    clear
+  }
+
+  at 5,11,17,23 {
+    layer "splashes"
+    clear
+    stamp "rain_near_dot" at (10, 27) :center
+    stamp "rain_near_dot" at (16, 28) :center
+    stamp "rain_near_dot" at (31, 28) :center
+    stamp "rain_near_dot" at (38, 29) :center
+  }
+}

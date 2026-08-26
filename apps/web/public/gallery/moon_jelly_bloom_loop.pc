@@ -1,0 +1,174 @@
+## Moon Jelly Bloom Loop
+## Three bioluminescent jellyfish drifting above a coral shelf in a calm underwater night current
+## Showcases: timeline layering, modern syntax (`const`/`letpair`/`defpt`), scoped layer clears, deterministic particles, ambient scene motion
+version 0.1
+canvas 48x40
+
+pal :dawnbringer16
+pal+ trench=#050816 deep=#0b1430 mid=#13305a glowWater=#1e4f73 shaft=#8be9ff10
+pal+ sand=#203447 sandHi=#34536a rock=#284055 rockHi=#456985 kelp=#275e54 kelpHi=#58a88e
+pal+ coral=#b85f7c coralHi=#ffb0c7 jellyBell=#7dd6ff jellyRim=#d9f6ff jellyCore=#f5fdff
+pal+ tentacle=#a3e9ff88 bubble=#dbf8ff66 mote=#8be9ff33 caustic=#8be9ff22 pearl=#f8fcff
+
+bitmap "bubble_dot" map B=bubble {
+  "B"
+}
+
+bitmap "mote_dot" map M=mote {
+  "M"
+}
+
+group "kelp_clump" pivot 4,12 {
+  line 1,12 2,3 kelp
+  line 3,12 4,1 kelpHi
+  line 5,12 6,4 kelp
+  line 7,12 7,2 kelpHi
+  px 2,5 4,4 5,6 kelpHi
+}
+
+group "coral_fan" pivot 4,7 {
+  line 4,7 3,1 coral
+  line 4,7 5,0 coralHi
+  line 4,7 1,3 coral
+  line 4,7 7,3 coralHi
+  line 4,7 0,5 coral
+  line 4,7 8,5 coralHi
+  px 2,2 6,2 1,4 7,4 pearl
+}
+
+group "rock_stack" pivot 6,4 {
+  ellipse 4,3 8x3 rock
+  ellipse 6,2 6x3 rockHi
+  px 2,2 3,1 6,1 7,2 sandHi
+}
+
+const shelfY = 31
+letpair kelpStride = 10x0
+defpt reefHeart = center +0,+11
+defpt leftCoral = reefHeart -15,+1
+defpt rightCoral = reefHeart +14,+0
+
+layer "water"
+rect 0,0 48x9 trench
+rect 0,9 48x9 deep
+rect 0,18 48x8 mid
+rect 0,26 48x6 glowWater
+line 0,8 47,8 #10204a
+line 0,17 47,17 #1a3c6b
+line 0,25 47,25 #2b6285
+
+layer "shafts"
+glow 9,4 8 shaft
+glow 24,5 10 shaft
+glow 39,6 8 shaft
+
+layer "floor"
+poly 0,40 0,31 8,32 15,31 24,34 31,30 39,32 47,29 47,40 sand
+line 0,31 47,31 sandHi
+
+layer "rocks"
+stamp "rock_stack" at (6, 34) :pivot
+stamp "rock_stack" at (23, 35) :pivot
+stamp "rock_stack" at (38, 33) :pivot
+
+layer "reef"
+stamp "coral_fan" at leftCoral :pivot
+stamp "coral_fan" at rightCoral :pivot
+glow leftCoral 4 #ffb0c71a
+glow rightCoral 4 #ffb0c71a
+
+layer "kelp"
+repeat 5 step kelpStride {
+  stamp "kelp_clump" at (2, 35) :pivot
+}
+
+layer "pearls"
+px 6,33 14,34 26,36 33,33 42,34 pearl
+
+timeline 0..31 {
+  each {
+    let sway = lerp(-2, 2, sin01($t + 0.1))
+    let current = lerp(-1, 2, cos01($t + 0.22))
+    let shimmer = lerp(0, 2, sin01($t * 2 + 0.3))
+
+    let aX = 13 + lerp(-1, 1, sin01($t + 0.05))
+    let aY = 15 + lerp(-1, 2, cos01($t + 0.1))
+    let aPulse = lerp(4, 5, sin01($t + 0.08))
+    let aTrail = lerp(-2, 2, sin01($t * 2 + 0.15))
+
+    let bX = 25 + lerp(-2, 1, cos01($t + 0.28))
+    let bY = 11 + lerp(-1, 2, sin01($t + 0.34))
+    let bPulse = lerp(5, 6, sin01($t + 0.32))
+    let bTrail = lerp(-2, 2, cos01($t * 2 + 0.4))
+
+    let cX = 37 + lerp(-1, 1, sin01($t + 0.55))
+    let cY = 18 + lerp(-2, 1, cos01($t + 0.48))
+    let cPulse = lerp(3, 4, sin01($t + 0.61))
+    let cTrail = lerp(-1, 2, sin01($t * 2 + 0.63))
+
+    with layer "caustics" clear {
+      line (2 + $current, 7) (16 + $current, 7) caustic
+      line (22 + $current, 9) (42 + $current, 9) caustic
+      line (5 - $current, 16) (18 - $current, 16) caustic
+      line (24 - $current, 18) (44 - $current, 18) caustic
+      line (6 + $current, 23) (20 + $current, 23) caustic
+      line (27 + $current, 24) (43 + $current, 24) caustic
+    }
+
+    with layer "motes" clear {
+      emit "mote_dot" at ($centerX + $sway, 8) count 18 spread 44x18 time $frame vel 0x1 jitter 2x1 life 20 fade seed 1201
+    }
+
+    with layer "jelly_glow" clear {
+      glow ($aX, $aY) ($aPulse + 2) #7dd6ff22
+      glow ($bX, $bY) ($bPulse + 2) #aee8ff20
+      glow ($cX, $cY) ($cPulse + 2) #7dd6ff18
+      glow ($aX, ($aY + 7)) 3 #dbf8ff12
+      glow ($bX, ($bY + 8)) 4 #dbf8ff10
+      glow ($cX, ($cY + 6)) 3 #dbf8ff10
+    }
+
+    with layer "jellies" clear {
+      ellipse ($aX, $aY) ($aPulse + 1)x$aPulse jellyBell
+      arc ($aX, $aY) $aPulse 205 335 jellyRim
+      px ($aX - 1),($aY - 1) ($aX + 1),($aY - 1) jellyCore
+      line (($aX - 2), ($aY + 2)) (($aX - 3 + $aTrail), ($aY + 10)) tentacle
+      line ($aX, ($aY + 2)) (($aX + $aTrail), ($aY + 11)) tentacle
+      line (($aX + 2), ($aY + 2)) (($aX + 3 + $aTrail), ($aY + 9)) tentacle
+
+      ellipse ($bX, $bY) ($bPulse + 1)x$bPulse jellyBell
+      arc ($bX, $bY) $bPulse 205 335 jellyRim
+      px ($bX - 1),($bY - 1) ($bX + 1),($bY - 1) jellyCore
+      line (($bX - 3), ($bY + 3)) (($bX - 4 + $bTrail), ($bY + 12)) tentacle
+      line (($bX - 1), ($bY + 3)) (($bX - 1 + $bTrail), ($bY + 13)) tentacle
+      line (($bX + 1), ($bY + 3)) (($bX + 2 + $bTrail), ($bY + 12)) tentacle
+      line (($bX + 3), ($bY + 3)) (($bX + 5 + $bTrail), ($bY + 11)) tentacle
+
+      ellipse ($cX, $cY) ($cPulse + 1)x$cPulse jellyBell
+      arc ($cX, $cY) $cPulse 205 335 jellyRim
+      px $cX,($cY - 1) jellyCore
+      line (($cX - 2), ($cY + 2)) (($cX - 3 + $cTrail), ($cY + 8)) tentacle
+      line ($cX, ($cY + 2)) (($cX + $cTrail), ($cY + 9)) tentacle
+      line (($cX + 2), ($cY + 2)) (($cX + 3 + $cTrail), ($cY + 8)) tentacle
+    }
+
+    with layer "bubbles" clear {
+      emit "bubble_dot" at ($aX, ($aY + 2)) count 6 spread 6x3 time $frame vel 0x-1 jitter 1x1 life 10 fade seed 310
+      emit "bubble_dot" at ($bX, ($bY + 3)) count 8 spread 8x4 time ($frame + 4) vel 0x-1 jitter 1x1 life 12 fade seed 620
+      emit "bubble_dot" at ($cX, ($cY + 2)) count 5 spread 5x3 time ($frame + 8) vel 0x-1 jitter 1x1 life 9 fade seed 930
+    }
+
+    with layer "reef_glimmer" clear {
+      arc reefHeart (8 + $shimmer) 200 340 #8be9ff18
+    }
+  }
+
+  every 8 offset 2 {
+    with layer "sparkles" clear {
+      glow (13, 11) 2 #f8fcff33
+      glow (25, 7) 2 #f8fcff33
+      glow (37, 14) 2 #f8fcff22
+      px 13,11 25,7 37,14 pearl
+    }
+  }
+}

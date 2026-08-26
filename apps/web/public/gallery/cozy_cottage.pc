@@ -1,0 +1,135 @@
+canvas 24x24
+
+# === NAMED PALETTE - semantic color names ===
+pal sky_day=#6EB5FF sky_dusk=#FF6B35 sky_night=#1B2838
+pal sun=#FFD93D moon=#E8E8E8 star=#FFFFFF
+pal cloud=#F0F0F0
+pal ground=#6B4423 grass=#3D8B37 path=#A0826D
+pal wall=#E8C49E roof=#A0522D
+pal door=#5D4037 handle=#FFD93D window=#6EB5FF trim=#4A4A4A
+pal trunk=#5D4037 leaves=#2E7D32 leaves_hi=#4CAF50
+pal flower=#FF69B4
+pal fence=#8B7355
+
+# === ANCHORS - semantic positioning ===
+anchor sun_high 18,4
+anchor sun_low 21,11
+anchor moon_pos 5,4
+anchor house_pos 4,9
+anchor tree_pos 19,10
+anchor door_knob 11,14
+
+# === BITMAPS - visual pattern definitions ===
+bitmap "cloud" {
+  ".00."
+  "0000"
+  ".00."
+}
+
+bitmap "star" {
+  ".0."
+  "000"
+  ".0."
+}
+
+bitmap "flower" {
+  ".0."
+  "000"
+}
+
+bitmap "bird" {
+  "0.0"
+  ".0."
+}
+
+# === GROUPS - reusable components ===
+group "window" {
+  rect 0,0 3x3 trim
+  rect 1,1 1x1 window
+}
+
+group "tree" {
+  rect 1,6 2x5 trunk
+  circ 2,4 3 leaves
+  circ 2,2 2 leaves_hi
+}
+
+# === MAIN SCENE GROUP ===
+group "landscape" {
+  # Ground layers
+  rect 0,18 24x6 ground
+  rect 0,18 24x2 grass
+
+  # Symmetric garden path using mirror
+  mirror :x
+  rect 10,19 2x3 path
+  rect 9,21 1x2 path
+  mirror off
+
+  # Fence posts with repeat
+  repeat 6 step 4x0 {
+    rect 0,16 1x3 fence
+  }
+  # Fence rail with line
+  line 0,17 23,17 fence
+
+  # House walls
+  rect house_pos 12x8 wall
+
+  # Triangular roof using poly
+  poly 3,9 10,4 17,9 roof
+
+  # Door with relative positioning for handle
+  rect 9,12 3x5 door
+  px door_knob handle
+  px +0,+1 handle
+
+  # Windows (manually positioned)
+  stamp "window" at 5,10
+  stamp "window" at 13,10
+
+  # Tree using group
+  stamp "tree" at tree_pos
+
+  # Flowers with repeat
+  repeat 3 step 7x0 {
+    stamp "flower" at 2,17
+  }
+
+  # Clouds
+  stamp "cloud" at 1,2
+  stamp "cloud" at 12,1
+}
+
+# === ANIMATION: DAY/DUSK/NIGHT CYCLE ===
+
+frame 1 {
+  # Bright day
+  fill 0,0 sky_day
+  stamp "landscape" at 0,0
+  circ sun_high 3 sun
+  # Birds in the sky
+  stamp "bird" at 7,6
+  stamp "bird" at 14,4
+}
+
+frame 2 {
+  # Warm dusk
+  fill 0,0 sky_dusk
+  stamp "landscape" at 0,0
+  circ sun_low 3 sun
+}
+
+frame 3 {
+  # Peaceful night
+  fill 0,0 sky_night
+  stamp "landscape" at 0,0
+  circ moon_pos 2 moon
+  # Stars emerge - cluster with relative positioning
+  px 10,2 star
+  px +2,+1 star
+  px +3,-1 star
+  # More scattered stars
+  stamp "star" at 3,5
+  stamp "star" at 20,3
+}

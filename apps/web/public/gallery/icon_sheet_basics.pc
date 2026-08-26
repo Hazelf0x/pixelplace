@@ -1,0 +1,145 @@
+## Icon Sheet Basics
+## Twelve cohesive game-ready icons arranged on a roomy production sheet
+## Showcases: shared palette, reusable slot framing, semantic pivot placement, tiny-grid readability
+version 0.1
+canvas 58x46
+
+pal :dawnbringer16
+pal+ bg=#09101e panel=#141f36 panelHi=#22345a panelLow=#0d1528
+pal+ slot=#0b1324 slotEdge=#506c9c safe=#182845
+pal+ gold=#d7a44d goldHi=#ffe49b steel=#b5c7e3 steelHi=#f3f7ff leather=#7d5233
+pal+ glass=#8fd8ff liquidHeal=#ff5d8f liquidMana=#5c9dff leaf=#4fae6f leafHi=#9df0a8
+pal+ ruby=#ff6b6b rubyHi=#ffe0cc shadow=#00000044
+
+const stride = 12
+const left = 11
+const top = 11
+
+bitmap "spark" map S=steelHi {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+group "slot_frame" pivot 0,0 {
+  rect -5,-5 10x10 slot
+  orect -5,-5 10x10 slotEdge
+  rect -3,-3 6x6 safe
+  px -4,-4 4,-4 -4,4 4,4 slotEdge
+}
+
+group "coin_icon" pivot 0,0 {
+  circ 0,0 2 gold
+  arc 0,0 2 35 145 goldHi
+  px -1,-1 0,-1 1,-1 goldHi
+}
+
+group "potion_icon" pivot 0,1 {
+  rect -1,-2 3x4 glass
+  rect -1,-1 2x3 liquidHeal
+  px 0,-3 steelHi
+}
+
+group "mana_icon" pivot 0,1 {
+  rect -1,-2 3x4 glass
+  rect -1,-1 2x3 liquidMana
+  px 0,-3 steelHi
+}
+
+group "key_icon" pivot (-1,0) {
+  rect -2,-1 3x2 gold
+  px -2,-2 -1,-2 goldHi
+  rect 1,-1 1x4 gold
+  px 2,1 2,2 gold
+}
+
+group "sword_icon" pivot 0,1 {
+  line 0,-3 0,1 steel
+  px 0,-4 steelHi
+  rect -2,2 4x1 gold
+  px -1,3 0,4 1,3 leather
+}
+
+group "shield_icon" pivot 0,0 {
+  poly 0,-3 2,-1 1,2 0,3 -1,2 -2,-1 steel
+  line 0,-2 0,2 gold
+  px -1,-1 1,-1 steelHi
+}
+
+group "leaf_icon" pivot 0,0 {
+  poly 0,-3 2,-1 1,2 -1,2 -2,-1 leaf
+  line 0,-2 0,2 leafHi
+  px -1,0 1,0 leafHi
+}
+
+group "gem_icon" pivot 0,0 {
+  poly 0,-3 2,0 0,3 -2,0 ruby
+  line -1,-1 1,-1 rubyHi
+  line 0,-2 0,2 rubyHi
+}
+
+group "heart_icon" pivot 0,0 {
+  circ -1,-1 1 ruby
+  circ 1,-1 1 ruby
+  poly -2,0 0,3 2,0 0,1 ruby
+  px 0,0 rubyHi
+}
+
+group "boot_icon" pivot 0,1 {
+  rect -2,-2 2x4 leather
+  rect 0,1 3x2 gold
+  px 1,0 2,0 gold
+}
+
+group "star_icon" pivot 0,0 {
+  stamp "spark" at 0,0 :center
+  px 0,-2 0,2 -2,0 2,0 goldHi
+}
+
+group "helm_icon" pivot 0,1 {
+  arc 0,-1 2 180 0 steel
+  rect -2,-1 5x3 steel
+  px -1,0 1,0 shadow
+  line -1,2 1,2 gold
+}
+
+layer "sheet"
+fill 0,0 bg
+rect 3,3 52x40 panel
+orect 3,3 52x40 panelHi
+rect 5,5 48x36 panelLow
+line 17,6 17,41 panelHi
+line 29,6 29,41 panelHi
+line 41,6 41,41 panelHi
+line 6,17 51,17 panelHi
+line 6,29 51,29 panelHi
+
+repeat 4 {
+  let x = $left + ($i * $stride)
+  stamp "slot_frame" at ($x, $top) :pivot
+  stamp "slot_frame" at ($x, ($top + $stride)) :pivot
+  stamp "slot_frame" at ($x, ($top + ($stride * 2))) :pivot
+}
+
+layer "icons"
+stamp "coin_icon" at ($left, $top) :pivot
+stamp "potion_icon" at (($left + $stride), $top) :pivot
+stamp "mana_icon" at (($left + ($stride * 2)), $top) :pivot
+stamp "key_icon" at (($left + ($stride * 3)), $top) :pivot
+
+stamp "sword_icon" at ($left, ($top + $stride)) :pivot
+stamp "shield_icon" at (($left + $stride), ($top + $stride)) :pivot
+stamp "leaf_icon" at (($left + ($stride * 2)), ($top + $stride)) :pivot
+stamp "gem_icon" at (($left + ($stride * 3)), ($top + $stride)) :pivot
+
+stamp "heart_icon" at ($left, ($top + ($stride * 2))) :pivot
+stamp "boot_icon" at (($left + $stride), ($top + ($stride * 2))) :pivot
+stamp "star_icon" at (($left + ($stride * 2)), ($top + ($stride * 2))) :pivot
+stamp "helm_icon" at (($left + ($stride * 3)), ($top + ($stride * 2))) :pivot
+
+layer "highlights"
+glow ($left, $top) 2 #ffe49b18
+glow (($left + $stride), $top) 2 #ff5d8f18
+glow (($left + ($stride * 2)), $top) 2 #5c9dff18
+glow (($left + ($stride * 3)), ($top + $stride)) 2 #ffe49b10
+glow (($left + ($stride * 3)), ($top + ($stride * 2))) 2 #f3f7ff12

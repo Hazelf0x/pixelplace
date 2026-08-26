@@ -1,0 +1,200 @@
+## The Night Gardener
+## A gentle snail carries a rainlit glass garden across the sleeping heath.
+## Showcases: semantic points, pivoted groups, translucent materials,
+##   expression-driven character motion, rain, fireflies, and a seamless timeline.
+version 0.1
+canvas 80x56
+
+pal night0=#080b20 night1=#111735 night2=#1b2948 night3=#29405a
+pal+ cloud=#6e779055 cloudHi=#aab1c244 star=#edf4df moon=#ffe6a3 moonGlow=#ffe6a322
+pal+ hillFar=#182b35 hillNear=#17352f heath=#122b26 earth=#0b211f path=#375044
+pal+ grass=#286048 grassHi=#55a16b flower=#f2a6c6 flowerCore=#ffe6a3
+pal+ snailDark=#263d3a snailBody=#54705b snailHi=#9bb982 foot=#1b3431 eye=#090d18 blush=#d58c88
+pal+ shellRim=#b7e8d2 shellDark=#315f5f shellGlass=#72bfb633 glassHi=#d9fff099
+pal+ soil=#3a3327 trunk=#624731 leafDark=#1f563e leaf=#3d8b55 leafHi=#79c96e
+pal+ lantern=#ffb957 lanternCore=#fff1ae lanternGlow=#ffbd5733 rain=#a9d8e066
+pal+ firefly=#f8ef91 mote=#f8ef9166 shadow=#05091688
+
+const groundY = 43
+defpt moonPos = center -27,-19
+defpt gardenHeart = center +1,-15
+
+bitmap "star_dot" map S=star {
+  "S"
+}
+
+bitmap "star_cross" map S=star {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+bitmap "rain_drop" map R=rain {
+  "R.."
+  ".R."
+  "..R"
+}
+
+bitmap "firefly_dot" map F=mote {
+  "F"
+}
+
+group "tiny_bloom" pivot 1,2 {
+  px 1,2 grassHi
+  px 0,1 2,1 flower
+  px 1,0 flower
+  px 1,1 flowerCore
+}
+
+group "garden_lantern" pivot 1,0 {
+  line 1,0 1,3 trunk
+  glow 1,4 3 lanternGlow
+  rect 0,3 3x3 lantern
+  px 1,4 lanternCore
+}
+
+# --- sleeping sky ---
+layer "sky"
+rect 0,0 80x9 night0
+rect 0,9 80x9 night1
+rect 0,18 80x9 night2
+rect 0,27 80x8 night3
+dither bayer at 0,7 80x4 night0 night1
+dither bayer at 0,16 80x4 night1 night2
+dither bayer at 0,25 80x4 night2 night3
+
+glow moonPos 8 moonGlow
+arc moonPos 5 70 290 moon
+scatter "star_dot" in 2,2 76x22 count 38 seed 1307
+scatter "star_cross" in 5,3 70x17 count 6 seed 731
+
+# broad clouds leave a quiet opening around the moon
+layer "clouds"
+ellipse 18,15 25x5 cloud
+ellipse 10,17 22x4 cloudHi
+ellipse 61,11 29x6 cloud
+ellipse 70,14 22x4 cloudHi
+ellipse 44,21 24x4 cloud
+
+# --- distant heath ---
+layer "hills"
+poly 0,37 0,31 8,28 17,32 27,25 38,31 48,26 59,32 69,27 79,30 79,43 0,43 hillFar
+poly 0,43 0,36 11,33 21,38 32,31 43,37 54,32 65,37 74,34 79,36 79,43 hillNear
+px 5,32 24,29 51,30 72,31 grassHi
+
+# --- wet ground and a dim path ---
+layer "ground"
+rect 0,$groundY 80x13 heath
+poly 0,52 0,47 14,45 27,47 38,46 52,49 64,47 79,49 79,56 0,56 earth
+poly 8,56 18,50 32,48 47,50 61,56 path
+dither bayer at 0,43 80x4 hillNear heath
+
+repeat 10 step 8x0 {
+  line 2,46 1,42 grass
+  line 4,46 5,41 grassHi
+  px 6,44 grass
+}
+stamp "tiny_bloom" at 8,47 :pivot
+stamp "tiny_bloom" at 73,48 :pivot
+stamp "tiny_bloom" at 4,51 :pivot
+
+# --- the travelling garden ---
+timeline 0..47 {
+  each {
+    let ox = lerp(-2, 2, sin01($t))
+    let bob = lerp(-1, 1, cos01($t))
+    let breathe = lerp(0, 2, sin01($t + 0.12))
+    let feeler = lerp(-1, 1, sin01($t * 2 + 0.2))
+    let warmPulse = lerp(3, 5, sin01($t + 0.38))
+
+    # warm life shines through the dome before its solid forms are painted
+    with layer "garden_glow" clear {
+      glow (41 + $ox, 31 + $bob) (12 + $breathe) #72bfb61a
+      glow (36 + $ox, 29 + $bob) $warmPulse lanternGlow
+      glow (46 + $ox, 30 + $bob) $warmPulse lanternGlow
+    }
+
+    with layer "snail" clear {
+      # glass shell: shadow first, then the tiny protected garden
+      ellipse (41 + $ox, 31 + $bob) 27x23 shellDark
+      ellipse (41 + $ox, 30 + $bob) 25x21 shellGlass
+      ellipse (41 + $ox, 37 + $bob) 21x5 soil
+      line (32 + $ox),(37 + $bob) (50 + $ox),(37 + $bob) snailDark
+
+      # old tree at the center of the carried world
+      line (41 + $ox),(36 + $bob) (41 + $ox),(24 + $bob) trunk
+      line (41 + $ox),(29 + $bob) (36 + $ox),(26 + $bob) trunk
+      line (41 + $ox),(28 + $bob) (46 + $ox),(25 + $bob) trunk
+      circ (41 + $ox, 23 + $bob) 4 leafDark
+      circ (37 + $ox, 26 + $bob) 4 leaf
+      circ (45 + $ox, 25 + $bob) 4 leaf
+      circ (41 + $ox, 26 + $bob) 5 leaf
+      px (38 + $ox),(23 + $bob) (42 + $ox),(22 + $bob) (45 + $ox),(25 + $bob) leafHi
+
+      # two lamps are the garden's small artificial suns
+      stamp "garden_lantern" at (35 + $ox, 29 + $bob) :pivot
+      stamp "garden_lantern" at (47 + $ox, 30 + $bob) :pivot
+      stamp "tiny_bloom" at (33 + $ox, 37 + $bob) :pivot
+      stamp "tiny_bloom" at (49 + $ox, 37 + $bob) :pivot
+
+      # ribs and rain-catching highlights describe the glass
+      oellipse (41 + $ox, 30 + $bob) 25x21 shellRim
+      arc (41 + $ox, 30 + $bob) 10 205 335 glassHi
+      line (32 + $ox),(24 + $bob) (35 + $ox),(21 + $bob) glassHi
+      px (34 + $ox),(22 + $bob) (36 + $ox),(20 + $bob) glassHi
+
+      # long soft body, head, smile, and the wet edge of the foot
+      poly (27 + $ox),(42 + $bob) (15 + $ox),(45 + $bob) (29 + $ox),(47 + $bob) snailDark
+      ellipse (43 + $ox, 44 + $bob) 38x6 snailBody
+      ellipse (63 + $ox, 42 + $bob) 11x8 snailBody
+      rect (57 + $ox),(40 + $bob) 8x4 snailBody
+      line (23 + $ox),(47 + $bob) (68 + $ox),(47 + $bob) foot
+      line (27 + $ox),(42 + $bob) (54 + $ox),(42 + $bob) snailHi
+
+      # feelers sway independently while their tips remain bright
+      line (62 + $ox),(39 + $bob) (61 + $ox + $feeler),(32 + $bob) snailHi
+      line (67 + $ox),(39 + $bob) (70 + $ox + $feeler),(31 + $bob) snailHi
+      circ (61 + $ox + $feeler, 32 + $bob) 1 snailHi
+      circ (70 + $ox + $feeler, 31 + $bob) 1 snailHi
+      px (61 + $ox + $feeler),(32 + $bob) (70 + $ox + $feeler),(31 + $bob) eye
+      px (67 + $ox),(42 + $bob) eye
+      px (67 + $ox),(41 + $bob) glassHi
+      px (65 + $ox),(44 + $bob) blush
+      line (67 + $ox),(44 + $bob) (69 + $ox),(43 + $bob) snailDark
+    }
+
+    # rainfall passes both behind and in front of the moving silhouette
+    with layer "rain" clear {
+      emit "rain_drop" at 40,6 count 34 spread 78x40 time $frame vel 1x3 jitter 1x1 life 15 loop 48 fade seed 907
+    }
+
+    with layer "fireflies" clear {
+      emit "firefly_dot" at (41 + $ox, 29 + $bob) count 11 spread 24x17 time $frame vel 0x-1 jitter 2x2 active 0..0.72 life 18 loop 48 fade seed 413
+    }
+
+    # nearest grass blades briefly hide the foot and settle it into the heath
+    with layer "front_grass" clear {
+      line 17,50 19,45 grassHi
+      line 21,51 20,46 grass
+      line 59,51 61,46 grassHi
+      line 65,51 64,45 grass
+      px 18,48 60,49 66,47 grassHi
+    }
+  }
+
+  every 12 offset 3 {
+    with layer "twinkles" clear {
+      glow 9,8 2 moonGlow
+      glow 56,5 2 moonGlow
+      px 9,8 56,5 star
+    }
+  }
+
+  every 12 offset 9 {
+    with layer "twinkles" clear {
+      glow 32,11 2 moonGlow
+      glow 73,18 2 moonGlow
+      px 32,11 73,18 star
+    }
+  }
+}

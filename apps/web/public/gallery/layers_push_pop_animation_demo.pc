@@ -1,0 +1,51 @@
+# Animated layer + push/pop demo
+canvas 20x12
+pal sky=#6eb5ff ground=#3d8b37 tower=#c2c3c7 window=#1d2b53 light=#fff1b8 cloud=#ffffff
+
+fill 0,0 sky
+
+layer "ground"
+rect 0,9 20x3 ground
+
+layer "clouds"
+push
+mirror :x
+rect 2,2 4x1 cloud
+rect 4,3 3x1 cloud
+pop
+
+layer "tower"
+color tower
+rect 9,3 2x6
+rect 8,2 4x1
+px 9,6 window
+px 10,6 window
+cursor 9,6
+
+frame 0 {
+  # Temporary FX pass on a separate layer.
+  push
+  layer "fx"
+  color light
+  mirror :x
+  px 7,1
+  line 8,2 6,3
+  pop
+
+  # Back to tower state automatically: same layer, cursor, mirror, color.
+  px +0,+0 window
+  px +1,+0 window
+}
+
+frame 1 {
+  push
+  layer "fx"
+  color light
+  mirror :x
+  px 7,2
+  line 8,3 5,4
+  pop
+
+  px +0,+0 light
+  px +1,+0 light
+}

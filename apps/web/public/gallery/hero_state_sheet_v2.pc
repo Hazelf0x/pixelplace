@@ -1,0 +1,147 @@
+# Hero State Sheet v2
+# Focus: one file showcasing idle, walk, attack, and hurt using timeline clauses.
+canvas 48x28
+
+pal bg0=#0b1020 bg1=#141f38 panel=#1f2d4f panelHi=#32497b floor=#2b3a5a
+pal skin=#f2b58a hair=#6e4a3a tunic=#5d79b4 tunicShade=#425989 boot=#232734
+pal eye=#161620 white=#f5f6ff steel=#dbe7ff slash=#8de8ff hurt=#ff7b9f dust=#fff0b8
+
+bitmap "slash_arc" map S=slash {
+  "..S.."
+  ".SSS."
+  "SSSSS"
+  ".SSS."
+  "..S.."
+}
+
+bitmap "hit_star" map H=hurt {
+  "..H.."
+  ".HHH."
+  "HHHHH"
+  ".HHH."
+  "..H.."
+}
+
+bitmap "dust_dot" map D=dust {
+  "D"
+}
+
+group "hero_base" {
+  circ 3,2 2 hair
+  circ 3,3 2 skin
+  rect 1,5 5x4 tunic
+  rect 2,5 3x2 tunicShade
+  rect 1,9 2x2 boot
+  rect 4,9 2x2 boot
+  px 1,6 skin
+  px 5,6 skin
+  px 2,3 white
+  px 4,3 white
+  px 2,3 eye
+  px 4,3 eye
+}
+
+layer "bg"
+fill 0,0 bg0
+rect 0,0 ($width)x8 bg1
+
+layer "panel"
+cursor 1,2
+repeat 4 step 12x0 {
+  orect 0,0 10x23 panelHi
+  rect 1,1 8x21 panel
+}
+rect 0,20 ($width)x8 floor
+line 0,20 ($width - 1,20) #41547d
+line 0,8 ($width - 1,8) #25345b
+
+timeline 0..15 {
+  each {
+    let idleX = $centerX - 18
+    let walkX = $centerX - 6
+    let attackX = $centerX + 6
+    let hurtX = $centerX + 18
+    let baseY = $height - 9
+
+    let idleBob = (($frameNumber % 3) - 1)
+    let walkBob = (($frameNumber + 1) % 2)
+    let pulse = lerp(2, 4, ease_in_out($t))
+
+    push
+    layer "actors"
+    stamp "hero_base" at ($idleX, $baseY + $idleBob) :center
+    stamp "hero_base" at ($walkX, $baseY + $walkBob) :center
+    stamp "hero_base" at ($attackX, $baseY) :center
+    stamp "hero_base" at ($hurtX, $baseY) :center
+    line ($attackX + 2, $baseY + 1) ($attackX + 4, $baseY - 1) steel
+    pop
+
+    push
+    layer "fx"
+    glow ($idleX, $baseY + $idleBob + 2) 2 #a6c7ff22
+    glow ($attackX + 2, $baseY - 1) $pulse #8de8ff22
+    emit "dust_dot" at ($walkX, $baseY + 4) count 3 spread 4x1 time $frame vel 0x-1 jitter 1x1 life 4 fade seed (300 + $frame)
+    pop
+  }
+
+  range 0..7 {
+    let walkX = $centerX - 6
+    let baseY = $height - 9
+    let stepY = $baseY + 3
+
+    push
+    layer "actors"
+    px ($walkX - 2, $stepY) boot
+    px ($walkX + 2, $stepY - 1) boot
+    pop
+  }
+
+  range 8..15 {
+    let walkX = $centerX - 6
+    let baseY = $height - 9
+    let stepY = $baseY + 3
+
+    push
+    layer "actors"
+    px ($walkX - 2, $stepY - 1) boot
+    px ($walkX + 2, $stepY) boot
+    pop
+  }
+
+  range 4..11 {
+    let attackX = $centerX + 6
+    let baseY = $height - 9
+    let sx = lerp(($attackX + 3), ($attackX + 10), $localT)
+    let sy = lerp(($baseY - 2), ($baseY - 6), $localT)
+
+    push
+    layer "fx"
+    stamp "slash_arc" at ($sx, $sy) :center :rot90 opacity (0.9 - (0.6 * $localT))
+    emit "dust_dot" at ($sx, $sy) count 4 spread 3x2 time $localFrame vel 1x0 jitter 1x1 life 4 fade seed (800 + $frameNumber)
+    pop
+  }
+
+  at 4,12 {
+    let idleX = $centerX - 18
+    let baseY = $height - 9
+    let idleBob = (($frameNumber % 3) - 1)
+    let eyeY = $baseY + $idleBob - 2
+
+    push
+    layer "actors"
+    line ($idleX - 1, $eyeY) ($idleX, $eyeY) eye
+    line ($idleX + 1, $eyeY) ($idleX + 2, $eyeY) eye
+    pop
+  }
+
+  at 5,6,13,14 {
+    let hurtX = $centerX + 18
+    let baseY = $height - 9
+
+    push
+    layer "fx"
+    stamp "hit_star" at ($hurtX, $baseY - 3) :center
+    glow ($hurtX, $baseY - 1) 3 #ff7b9f33
+    pop
+  }
+}

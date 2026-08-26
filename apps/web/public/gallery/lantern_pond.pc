@@ -1,0 +1,253 @@
+# Lantern Pond Garden
+# A moonlit Japanese garden with glowing lanterns, koi fish, and lily pads
+# Showcases: bitmap map clause, glow command, ellipse primitive
+canvas 48x48
+
+# === PALETTE ===
+# Named palette — no index-counting needed!
+pal night=#0a0a1e night_lt=#141432 sky=#1a1a40
+pal water=#0c1830 water_lt=#142040 water_hl=#1c2850 ripple=#203060
+pal stone=#484850 stone_lt=#606068 stone_dk=#303038
+pal wood=#4a2810 wood_lt=#6a3818 wood_dk=#2a1808
+pal paper=#e8d8b0 paper_lt=#f4ecd0 paper_dk=#c8b888
+pal lantern=#ee6622 flame=#ffaa30 flame_lt=#ffcc60
+pal leaf=#1a4020 leaf_lt=#286030 leaf_dk=#0e2a10
+pal lily=#2a6830 lily_lt=#38884a lily_fl=#e888a0 lily_ctr=#ffee70
+pal koi_o=#e86020 koi_w=#e8d8c8 koi_r=#cc3030 koi_dk=#883010
+pal moon=#fffae0 bark=#1a1008
+pal blossom=#ffaacc blossom_dk=#dd7799 petal=#ffd0e0
+
+# === BITMAPS WITH MAP ===
+# Lantern body — readable character names instead of counting to index 14
+bitmap "lantern" map P = paper D = paper_dk L = paper_lt F = flame W = wood {
+  ".WW."
+  "WPPW"
+  "DPFL"
+  "DPFL"
+  "DPPL"
+  "WPPW"
+  ".WW."
+}
+
+bitmap "lantern_sm" map P = paper D = paper_dk F = flame W = wood {
+  ".W."
+  "DPF"
+  "DPF"
+  ".W."
+}
+
+# Koi fish (facing right) — map makes this easy to read
+bitmap "koi" map O = koi_o W = koi_w R = koi_r D = koi_dk {
+  "..OOO.."
+  ".OWWWO."
+  "OWRWWOD"
+  ".OWWWO."
+  "..OOO.."
+  "...D.D."
+}
+
+# Small koi
+bitmap "koi_sm" map O = koi_o W = koi_w {
+  ".OO."
+  "OWWO"
+  ".OO."
+}
+
+# Cherry blossom cluster
+bitmap "blossom" map B = blossom D = blossom_dk P = petal C = lily_ctr {
+  ".D.B."
+  "DBCBD"
+  ".BPB."
+  "B.D.B"
+}
+
+bitmap "blossom_sm" map B = blossom P = petal {
+  "BP"
+  "PB"
+}
+
+# Stone lantern top
+bitmap "lantern_top" map S = stone L = stone_lt D = stone_dk {
+  "..LL.."
+  ".LLLL."
+  "LLLLLL"
+  ".SSSS."
+  ".DSSD."
+}
+
+# Lily flower
+bitmap "lily_flower" map P = lily_fl C = lily_ctr L = lily_lt {
+  ".P."
+  "PCP"
+  ".P."
+}
+
+# === GROUPS ===
+group "stone_lantern" {
+  stamp "lantern_top" at 0,0
+  rect 1,5 4x4 stone
+  rect 2,6 2x2 flame
+  rect 2,9 2x6 stone_dk
+  rect 2,9 1x6 stone
+  glow 3,7 5 #ffaa3060
+}
+
+group "hanging_lantern" {
+  px 1,0 1,1 bark
+  stamp "lantern" at 0,2
+  glow 2,5 6 #ee662240
+}
+
+group "hanging_lantern_sm" {
+  px 1,0 bark
+  stamp "lantern_sm" at 0,1
+  glow 1,3 4 #ee662230
+}
+
+# === SKY ===
+layer "sky"
+rect 0,0 48x16 night
+rect 0,16 48x10 night_lt
+rect 0,26 48x22 sky
+
+# Moon with radial glow
+glow 38,7 8 #fffae030
+glow 38,7 4 #fffae060
+circ 38,7 2 moon
+
+# Stars
+push
+color moon
+px 5,3 12,6 20,2 28,4 8,9 33,8 15,11 42,5
+px 3,7 25,1 45,3 10,4 30,2 44,10
+pop
+
+# === GROUND (before water so pond draws on top) ===
+layer "ground"
+rect 0,26 48x22 leaf_dk
+rect 0,26 48x4 leaf
+
+# Stone path (stepping stones as ellipses)
+ellipse 8,28 3x1 stone
+ellipse 14,27 3x2 stone_lt
+ellipse 20,27 2x1 stone
+ellipse 38,28 3x1 stone
+ellipse 42,30 2x1 stone_lt
+ellipse 44,27 3x2 stone
+
+# Ground texture
+push
+color leaf_lt
+px 2,27 6,28 10,26 16,26 22,28 28,27 34,26 40,28 46,27
+px 1,29 5,30 9,29 15,28 25,26 31,28 37,29 43,26
+pop
+
+# === WATER (on top of ground) ===
+layer "water"
+
+# Pond shape — ellipses make this natural
+ellipse 24,34 20x10 water
+ellipse 24,34 18x9 water_lt
+ellipse 24,33 14x6 water_hl
+
+# Ripple highlights
+ellipse 18,32 3x1 ripple
+ellipse 30,35 4x1 ripple
+ellipse 24,37 3x1 ripple
+
+# Moon reflection in water
+glow 30,33 3 #fffae020
+glow 30,32 2 #fffae030
+px 30,32 31,33 #fffae040
+
+# === STONE LANTERNS ===
+layer "lanterns"
+stamp "stone_lantern" at 2,12
+stamp "stone_lantern" at 40,14
+
+# === TREES & BRANCHES ===
+layer "trees"
+
+# Left tree trunk
+rect 0,8 3x20 bark
+rect 3,10 1x16 bark
+
+# Right tree trunk
+rect 45,6 3x22 bark
+rect 44,8 1x18 bark
+
+# Branches for hanging lanterns
+line 3,12 12,10 bark
+line 44,10 36,8 bark
+
+# Canopy leaves
+rect 0,4 6x6 leaf_dk
+rect 0,2 4x4 leaf
+rect 44,2 4x6 leaf_dk
+rect 43,4 5x4 leaf
+
+# Hanging lanterns from branches
+stamp "hanging_lantern" at 7,10
+stamp "hanging_lantern" at 11,9
+stamp "hanging_lantern_sm" at 34,7
+stamp "hanging_lantern_sm" at 38,8
+
+# === KOI FISH ===
+layer "koi"
+stamp "koi" at 16,31
+stamp "koi_sm" at 28,35
+stamp "koi_sm" at 22,36 :flipx
+
+# === LILY PADS ===
+layer "lilies"
+
+# Lily pads as ellipses — organic oval shapes
+ellipse 12,33 3x1 lily
+ellipse 32,32 2x1 lily_lt
+ellipse 20,38 3x1 lily
+ellipse 26,31 2x1 lily
+
+# Lily flowers on pads
+stamp "lily_flower" at 11,32
+stamp "lily_flower" at 19,37
+
+# === CHERRY BLOSSOMS ===
+layer "blossoms"
+
+# Blossoms on branches
+stamp "blossom" at 5,6
+stamp "blossom" at 1,3
+stamp "blossom" at 42,3
+stamp "blossom" at 45,6
+
+# Falling petals
+stamp "blossom_sm" at 8,14
+stamp "blossom_sm" at 12,18
+stamp "blossom_sm" at 36,12
+stamp "blossom_sm" at 40,16
+
+# Scattered petals on water
+px 14,32 blossom
+px 26,34 petal
+px 34,36 blossom_dk
+
+# === FIREFLIES ===
+layer "fireflies"
+
+# Fireflies with glow — radial falloff instead of flat circles
+glow 15,20 3 #88ff4040
+px 15,20 #ccff80
+glow 32,22 3 #88ff4040
+px 32,22 #ccff80
+glow 24,18 2 #88ff4030
+px 24,18 #ccff80
+glow 8,22 2 #88ff4030
+px 8,22 #ccff80
+glow 40,20 2 #88ff4030
+px 40,20 #ccff80
+
+# === FOREGROUND MIST ===
+layer "mist"
+ellipse 24,42 18x4 #14204020
+ellipse 10,44 8x3 #14204018
+ellipse 38,43 8x3 #14204018

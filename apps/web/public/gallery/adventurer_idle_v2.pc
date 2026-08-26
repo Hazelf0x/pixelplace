@@ -1,0 +1,161 @@
+# Adventurer Idle v2
+# Focus: compact character idle cycle with blink + rune ambience.
+canvas 28x24
+
+pal bg=#0d1020 ground=#28344a cloak=#5f7cb8 cloakShade=#415684
+pal skin=#f2b58a hair=#7c4f3b eye=#1a1a24 white=#f5f6ff boot=#262833
+pal rune=#6ecbff runeGlow=#6ecbff33 spark=#fff2b8
+pal aura=#2f5cff22..#8cc8ff66 steps 3
+
+bitmap "spark_dot" map S=spark {
+  "S"
+}
+
+group "hero_body" {
+  circ 4,3 3 hair
+  circ 4,4 3 skin
+  rect 2,7 5x5 cloak
+  rect 3,7 3x2 cloakShade
+  rect 2,12 2x2 boot
+  rect 5,12 2x2 boot
+  px 2,9 skin
+  px 6,9 skin
+}
+
+layer "bg"
+fill 0,0 bg
+
+layer "ground"
+rect 0,17 28x7 ground
+line 0,17 27,17 #394a67
+
+layer "sigil"
+glow 14,16 5 runeGlow
+ocirc 14,16 4 rune
+line 10,16 18,16 rune
+line 14,12 14,20 rune
+px 12,14 16,14 12,18 16,18 rune
+
+frame 0 duration 2 {
+  let bob = 0
+  anchor heroPose 14,(13 + $bob)
+  anchor eyeLeft 12,(10 + $bob)
+
+  push
+  layer "hero"
+  stamp "hero_body" at heroPose :center
+  mirror :x
+  px eyeLeft white
+  px +0,+1 eye
+  mirror off
+  pop
+
+  push
+  layer "fx"
+  glow (14, 16 + $bob) (2 + ($frame % 2)) aura1
+  emit "spark_dot" at (14, 16 + $bob) count 8 spread 8x3 time $frame vel 0x-1 jitter 2x1 life 6 fade seed (700 + $frame + $frameCount)
+  pop
+}
+
+frame 1 duration 2 {
+  let bob = 1
+  anchor heroPose 14,(13 + $bob)
+  anchor eyeLeft 12,(10 + $bob)
+
+  push
+  layer "hero"
+  stamp "hero_body" at heroPose :center
+  mirror :x
+  px eyeLeft white
+  px +0,+1 eye
+  mirror off
+  pop
+
+  push
+  layer "fx"
+  glow (14, 16 + $bob) (2 + ($frame % 2)) aura2
+  emit "spark_dot" at (14, 16 + $bob) count 9 spread 9x3 time $frame vel 0x-1 jitter 2x1 life 6 fade seed (760 + $frame + $frameCount)
+  pop
+}
+
+frame 2 duration 1 {
+  let bob = -1
+  let blinkY = 11 + $bob
+  anchor heroPose 14,(13 + $bob)
+
+  push
+  layer "hero"
+  stamp "hero_body" at heroPose :center
+  mirror :x
+  line 11,$blinkY 12,$blinkY eye
+  mirror off
+  pop
+
+  push
+  layer "fx"
+  glow (14, 16 + $bob) 3 aura0
+  emit "spark_dot" at (14, 16 + $bob) count 10 spread 10x3 time $frame vel 0x-1 jitter 2x1 life 6 fade seed (820 + $frame + $frameCount)
+  pop
+}
+
+frame 3 duration 2 {
+  let bob = 0
+  anchor heroPose 14,(13 + $bob)
+  anchor eyeLeft 12,(10 + $bob)
+
+  push
+  layer "hero"
+  stamp "hero_body" at heroPose :center
+  mirror :x
+  px eyeLeft white
+  px +0,+1 eye
+  mirror off
+  pop
+
+  push
+  layer "fx"
+  glow (14, 16 + $bob) (2 + ($frame % 2)) aura1
+  emit "spark_dot" at (14, 16 + $bob) count 8 spread 8x3 time $frame vel 0x-1 jitter 2x1 life 6 fade seed (880 + $frame + $frameCount)
+  pop
+}
+
+frame 4 duration 2 {
+  let bob = 1
+  anchor heroPose 14,(13 + $bob)
+  anchor eyeLeft 12,(10 + $bob)
+
+  push
+  layer "hero"
+  stamp "hero_body" at heroPose :center
+  mirror :x
+  px eyeLeft white
+  px +0,+1 eye
+  mirror off
+  pop
+
+  push
+  layer "fx"
+  glow (14, 16 + $bob) (2 + ($frame % 2)) aura2
+  emit "spark_dot" at (14, 16 + $bob) count 9 spread 9x3 time $frame vel 0x-1 jitter 2x1 life 6 fade seed (940 + $frame + $frameCount)
+  pop
+}
+
+frame 5 duration 1 {
+  let bob = -1
+  let blinkY = 11 + $bob
+  anchor heroPose 14,(13 + $bob)
+
+  push
+  layer "hero"
+  stamp "hero_body" at heroPose :center
+  mirror :x
+  line 11,$blinkY 12,$blinkY eye
+  mirror off
+  pop
+
+  push
+  layer "fx"
+  glow (14, 16 + $bob) 3 aura0
+  emit "spark_dot" at (14, 16 + $bob) count 10 spread 10x3 time $frame vel 0x-1 jitter 2x1 life 6 fade seed (1000 + $frame + $frameCount)
+  pop
+}

@@ -1,0 +1,94 @@
+# Intrinsics Showcase: Reactor Lockdown (timeline animation)
+# Highlights:
+# - clamp() keeps the scan beam inside rail bounds.
+# - abs() + step() trigger alert behavior when the beam drifts off-center.
+# - min()/max() blend pulse + alert into one intensity control.
+# - smoothstep() shapes the breathing core motion.
+canvas 64x36
+
+pal void=#060a14 hull=#121a2d panel=#1b2740 rail=#2b3d66
+pal core=#2fc2ff ring=#8be8ff ringHot=#c5f6ff beam=#79dfff beamGlow=#79dfff66
+pal shutter=#0e1425 shutterEdge=#2f3e60 spark=#d8f7ff
+
+bitmap "arc_spark" map S=spark {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+layer "bg"
+rect 0,0 64x36 void
+dither bayer at 0,0 64x36 void #0a1324 seed 4
+
+layer "hull"
+orect 2,3 60x30 hull
+orect 5,6 54x24 panel
+line 6,18 57,18 rail
+line 32,6 32,29 rail
+ocirc center 12 rail
+ocirc center 10 #22355c
+
+timeline 0..47 {
+  each {
+    let wave = sin01($t)
+    let breath = smoothstep(0.08, 0.92, $wave)
+    let coreRadius = lerp(4, 9, $breath)
+
+    let drift = noise01($frameNumber, 0, 77)
+    let beamRaw = lerp(6, 57, sin01($t * 1.3 + $drift * 0.15))
+    let beamX = clamp($beamRaw, 6, 57)
+    let offCenter = abs($beamX - $centerX)
+
+    let alert = step(9, $offCenter)
+    let ringMix = max(0.25, min(1, ($breath + $alert * 0.45)))
+    let shutterPulse = max(step(0.74, sin01($t * 2)), step(0.91, noise01($frameNumber, 1, 1234)))
+    let shutterH = lerp(2, 7, $shutterPulse)
+
+    layer "core"
+    clear
+    glow center ($coreRadius + 5) #4fd3ff2d
+    circ center $coreRadius core
+    arc center ($coreRadius + 1) 0 360 ring
+    ocirc center ($coreRadius + 3) ringHot
+    line ($centerX - $coreRadius - 4, $centerY) ($centerX + $coreRadius + 4, $centerY) ring
+
+    layer "scan"
+    clear
+    glow ($beamX, $centerY) 5 beamGlow
+    line ($beamX, 5) ($beamX, 30) beam
+    dither noise at ($beamX - 2, 5) 5x26 #133456 #57c5ff22 seed (600 + $frameNumber)
+
+    layer "shutters"
+    clear
+    rect 0,0 64x($shutterH) shutter
+    rect 0,($height - $shutterH) 64x($shutterH) shutter
+    line 0,($shutterH) 63,($shutterH) shutterEdge
+    line 0,($height - $shutterH - 1) 63,($height - $shutterH - 1) shutterEdge
+
+    layer "sparks"
+    clear
+    emit "arc_spark" at ($beamX, $centerY)
+      count (lerp(4, 11, $ringMix))
+      spread 7x12
+      time $frame
+      vel 0x-1
+      jitter 2x2
+      life 6
+      fade
+      seed (900 + $frameNumber)
+  }
+
+  at 6,18,30,42 {
+    layer "sparks"
+    emit "arc_spark" at ($centerX, $centerY)
+      count 24
+      spread 12x14
+      time $localFrame
+      vel 0x-2
+      jitter 3x2
+      active 0..4
+      life 6
+      fade
+      seed (1700 + $frameNumber)
+  }
+}

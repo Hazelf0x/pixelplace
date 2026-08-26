@@ -1,0 +1,148 @@
+## Aurora Waystation
+## A warm signal tower above an icy lake under broad aurora bands
+## Showcases: version pragma, palette preset + pal+, PNG-friendly bold composition
+version 0.1
+canvas 64x64
+
+pal :dawnbringer16
+pal+ skyTop=#07101d skyMid=#11203b skyGlow=#20385f
+pal+ auroraA=#4ee3c1 auroraB=#8dff9c auroraC=#a0d8ff
+pal+ star=#f5f1d8 moon=#efe0af
+pal+ mountain=#1b2332 mountainHi=#263248
+pal+ snow=#edf2ff snowShade=#b7c5df ice=#7faed8 iceGlow=#a7dbff
+pal+ tower=#5a657a towerShade=#384253 trim=#d7b37a
+pal+ windowWarm=#ffc86b windowCore=#fff2c1 beacon=#ff7a5c beaconGlow=#ff7a5c33
+pal+ pine=#17392d pineHi=#245342 trunk=#4d3428
+
+const horizonY = 34
+anchor moonPos 13,10
+anchor towerBase 43,24
+
+bitmap "star_dot" map S=star {
+  "S"
+}
+
+bitmap "star_cross" map S=star {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+group "fir_large" {
+  rect 6,18 2x11 trunk
+  rect 3,12 8x8 pine
+  rect 2,7 10x8 pineHi
+  rect 1,2 12x8 pine
+  px 5,1 6,0 7,1 pineHi
+}
+
+group "fir_small" {
+  rect 4,12 2x8 trunk
+  rect 2,8 6x6 pine
+  rect 1,4 8x6 pineHi
+  rect 0,1 10x5 pine
+  px 4,0 5,0 pineHi
+}
+
+layer "sky"
+rect 0,0 64x16 skyTop
+rect 0,16 64x10 skyMid
+rect 0,26 64x8 skyGlow
+
+glow moonPos 6 #efe0af22
+arc moonPos 4 200 340 moon
+
+scatter "star_dot" in 0,0 64x20 count 36 seed 11
+scatter "star_cross" in 4,2 56x14 count 5 seed 51
+
+layer "aurora"
+line 2,12 10,10 auroraA
+line 10,10 18,11 auroraA
+line 18,11 28,9 auroraA
+line 28,9 38,10 auroraA
+line 38,10 48,8 auroraA
+line 48,8 60,10 auroraA
+line 4,13 12,11 auroraA
+line 12,11 22,12 auroraA
+line 22,12 33,10 auroraA
+line 33,10 44,11 auroraA
+line 44,11 56,9 auroraA
+glow 28,10 8 #4ee3c108
+
+line 0,17 8,15 auroraB
+line 8,15 18,16 auroraB
+line 18,16 29,14 auroraB
+line 29,14 40,15 auroraB
+line 40,15 52,13 auroraB
+line 52,13 63,15 auroraB
+line 2,18 10,16 auroraB
+line 10,16 20,17 auroraB
+line 20,17 31,15 auroraB
+line 31,15 42,16 auroraB
+line 42,16 54,14 auroraB
+glow 34,15 9 #8dff9c08
+
+line 5,21 14,20 auroraC
+line 14,20 24,21 auroraC
+line 24,21 35,19 auroraC
+line 35,19 46,20 auroraC
+line 46,20 58,18 auroraC
+line 6,22 15,21 auroraC
+line 15,21 26,22 auroraC
+line 26,22 37,20 auroraC
+line 37,20 48,21 auroraC
+line 48,21 60,19 auroraC
+glow 31,20 7 #a0d8ff08
+
+layer "mountains"
+poly 0,35 8,29 16,32 24,27 33,31 44,25 55,30 63,27 63,48 0,48 mountain
+poly 0,39 9,34 18,37 28,32 38,35 48,30 58,34 63,32 63,48 0,48 mountainHi
+
+layer "ice"
+rect 0,$horizonY 64x30 snowShade
+rect 0,46 64x18 ice
+rect 0,54 64x10 snow
+line 0,45 14,43 snow
+line 20,44 36,42 snow
+line 43,43 63,41 snow
+line 4,51 18,49 iceGlow
+line 28,50 42,48 iceGlow
+line 48,52 62,49 iceGlow
+px 7,57 8,57 19,55 20,55 34,56 35,56 51,58 52,58 snow
+
+layer "tower"
+rect 39,28 10x18 tower
+rect 41,25 6x3 tower
+rect 42,22 4x3 towerShade
+rect 43,20 2x2 trim
+rect 38,46 12x2 towerShade
+orect 39,28 10x18 trim
+orect 41,25 6x3 trim
+orect 42,22 4x3 trim
+px 41,31 42,31 45,31 46,31 windowWarm
+px 41,32 42,32 45,32 46,32 windowCore
+px 41,36 42,36 45,36 46,36 windowWarm
+px 41,37 42,37 45,37 46,37 windowCore
+px 43,42 44,42 windowWarm
+px 43,43 44,43 windowCore
+line 44,20 44,15 trim
+glow 44,14 5 beaconGlow
+glow 44,14 2 #ff7a5c55
+px 44,14 beacon
+
+layer "shore"
+poly 0,48 10,46 19,47 27,45 36,47 46,44 56,46 63,45 63,64 0,64 snow
+line 0,48 10,46 snowShade
+line 20,47 29,45 snowShade
+line 40,46 50,44 snowShade
+
+layer "trees"
+stamp "fir_large" at (-2,35)
+stamp "fir_small" at 8,42
+stamp "fir_small" at 49,42
+stamp "fir_large" at 54,34
+
+layer "reflection"
+glow 44,50 4 #ff7a5c08
+line 43,47 45,47 #ff7a5c18
+line 42,50 46,50 #a7dbff16

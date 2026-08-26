@@ -1,0 +1,39 @@
+canvas 24x16
+pal bg=#1a1c2c grass=#3f7d3c stone=#7d7a86 water=#3b78b8 foam=#a8d7ff
+
+bitmap "grass_tile" map G=grass {
+  "GGGG"
+  "GGGG"
+  "GGGG"
+  "GGGG"
+}
+
+bitmap "stone_tile" map S=stone {
+  "SSSS"
+  "S.SS"
+  "SS.S"
+  "SSSS"
+}
+
+bitmap "water_tile" map W=water F=foam {
+  "WWWW"
+  "WFFW"
+  "WFFW"
+  "WWWW"
+}
+
+tileset "terrain" tileSize 4x4 {
+  tile "G" "grass_tile"
+  tile "S" "stone_tile"
+  tile "W" "water_tile"
+}
+
+tilemap "field" from "terrain" {
+  "GGGGGG"
+  "GSSWGG"
+  "GSWWGG"
+  "GGGGGG"
+}
+
+fill 0,0 bg
+map "field" at center

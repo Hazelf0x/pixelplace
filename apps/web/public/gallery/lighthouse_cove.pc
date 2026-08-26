@@ -1,0 +1,76 @@
+# Lighthouse Cove (Animated Beacon Sweep)
+canvas 32x24
+pal sky=#101a2e horizon=#2b4368 white=#f4f4f4 sea=#12324d foam=#6ba9c9 rock=#2a2a33 wall=#c9c3b5 trim=#8a7f70 lamp=#ffd86b beam=#ffe6a3 window=#87d7ff shadow=#1a2238
+
+# Sky and sea
+rect 0,0 32x10 sky
+rect 0,10 32x4 horizon
+rect 0,14 32x10 sea
+line 0,14 31,14 foam
+
+# Distant cliffs
+poly 0,14 6,10 12,14 rock
+poly 11,14 18,9 25,14 rock
+poly 22,14 28,11 31,14 rock
+
+# Water texture
+bitmap "wave" {
+  "44..44"
+  ".4444."
+}
+
+# Tiny star sprite (index 2 = white)
+bitmap "star" {
+  ".2."
+  "222"
+  ".2."
+}
+
+group "lighthouse" {
+  rect 0,6 5x10 wall
+  orect 0,6 5x10 trim
+  rect 1,8 3x2 window
+  rect 1,13 3x3 trim
+  rect 2,14 1x2 lamp
+  rect 1,4 3x2 trim
+  rect 2,3 1x1 lamp
+  poly 0,6 2,2 4,6 trim
+}
+
+group "jetty" {
+  rect 0,0 10x2 trim
+  repeat 5 step 2x0 {
+    rect 0,2 1x3 shadow
+  }
+}
+
+anchor lighthousePos 23,4
+stamp "lighthouse" at lighthousePos
+stamp "jetty" at 18,18
+tile "wave" at 0,18 32x6 step 6x2
+
+# Static stars
+stamp "star" at 3,2
+stamp "star" at 9,4
+stamp "star" at 15,2
+stamp "star" at 20,5
+
+frame 1 {
+  poly 25,7 31,5 31,9 beam
+  stamp "star" at 27,3
+}
+
+frame 2 {
+  poly 25,7 31,8 31,12 beam
+  stamp "star" at 28,6
+}
+
+frame 3 {
+  poly 25,7 17,7 17,11 beam
+  stamp "star" at 29,4
+}
+
+frame 4 {
+  poly 25,7 17,4 17,8 beam
+  stamp "star" at 26,5
+}

@@ -1,0 +1,103 @@
+# v0.1 Teaser: Palette Pattern Bloom
+# Simple procedural reveal built for social clips.
+# Palette-swap hook: change only the `theme` gradient line to restyle everything.
+canvas 64x64
+
+pal bg=#05070f grid=#0e1830 hot=#f6fbff accent=#ffd166
+pal theme=#2563eb..#7dd3fc steps 6
+
+group "diamond" {
+  opoly 0,-2 2,0 0,2 -2,0 theme4
+  px 0,0 hot
+}
+
+layer "bg"
+fill 0,0 bg
+
+layer "grid"
+repeat 16 step 4x0 {
+  line 0,0 0,63 grid
+}
+repeat 16 step 0x4 {
+  line 0,0 63,0 grid
+}
+
+timeline 0..23 {
+  each {
+    let cx = $centerX
+    let cy = $centerY
+    let corePulse = lerp(2, 4, ease_in_out($t))
+
+    push
+    layer "core"
+    glow ($cx, $cy) $corePulse #7dd3fc22
+    circ ($cx, $cy) 1 theme5
+    ocirc ($cx, $cy) 2 hot
+    pop
+  }
+
+  range 0..23 {
+    let cx = $centerX
+    let cy = $centerY
+    let inner = lerp(3, 18, ease_in_out($localT))
+    let outer = lerp(6, 27, ease_in_out($localT))
+
+    push
+    layer "rings"
+    ocirc ($cx, $cy) $inner theme2
+    ocirc ($cx, $cy) $outer theme5
+    pop
+  }
+
+  range 6..23 {
+    let cx = $centerX
+    let cy = $centerY
+    let arm = lerp(4, 24, ease_in_out($localT))
+
+    push
+    layer "spokes"
+    mirror :xy
+    line ($cx - 1, $cy) ($cx - $arm, $cy) theme4
+    line ($cx, $cy - 1) ($cx - ($arm - 3), $cy - ($arm - 3)) theme2
+    mirror off
+    pop
+  }
+
+  range 12..23 {
+    let cx = $centerX
+    let cy = $centerY
+    let orbit = lerp(7, 20, ease_in_out($localT))
+    let drift = (($frameNumber % 4) - 1)
+
+    push
+    layer "orbit"
+    stamp "diamond" at ($cx - $orbit, $cy + $drift) :center
+    stamp "diamond" at ($cx + $orbit, $cy - $drift) :center :rot90
+    stamp "diamond" at ($cx + $drift, $cy - $orbit) :center :rot180
+    stamp "diamond" at ($cx - $drift, $cy + $orbit) :center :rot270
+    pop
+  }
+
+  range 18..23 {
+    let sweepY = lerp(6, 58, $localT)
+
+    push
+    layer "sweep"
+    rect 0,($sweepY - 1) 64x2 #ffffff12
+    line 0,$sweepY 63,$sweepY accent
+    pop
+  }
+
+  at 23 {
+    let cx = $centerX
+    let cy = $centerY
+
+    push
+    layer "burst"
+    mirror :xy
+    line ($cx - 6, $cy) ($cx - 28, $cy) hot
+    line ($cx, $cy - 6) ($cx - 20, $cy - 20) theme5
+    mirror off
+    pop
+  }
+}

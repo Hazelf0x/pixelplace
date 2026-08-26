@@ -1,0 +1,94 @@
+# Item Icons Showcase v2
+# Focus: animated icon panel with transforms, opacity, tile/scatter, and emit.
+canvas 40x24
+
+pal bg0=#0b0f1e bg1=#121a33 panel=#1d2745 panelHi=#2f3e68 slot=#10182f slotEdge=#5f76b5
+pal coin0=#7a4b12 coin1=#c8861f coin2=#ffd766 potionGlass=#8bd6ff potionFill=#ff4f9a
+pal keyMetal=#d4d8f0 keyShade=#7d87ad gem0=#3da2ff gem1=#8be9ff gem2=#f1ffff
+pal dust=#fff0b8 dustGlow=#fff0b844
+
+bitmap "checker" map D=bg0 L=bg1 {
+  "DL"
+  "LD"
+}
+
+bitmap "coin" map A=coin0 B=coin1 C=coin2 {
+  ".CCC."
+  "CBBBC"
+  "CBABC"
+  "CBBBC"
+  ".CCC."
+}
+
+bitmap "potion" map G=potionGlass F=potionFill {
+  "..GG.."
+  ".GFFG."
+  ".GFFG."
+  ".GFFG."
+  "..GG.."
+  "..GG.."
+}
+
+bitmap "key" map M=keyMetal S=keyShade {
+  "MM...."
+  "M.SM.."
+  "MM...."
+  ".MM..."
+  "..MMMM"
+}
+
+bitmap "gem" map A=gem0 B=gem1 C=gem2 {
+  "..B.."
+  ".BCB."
+  "BCACB"
+  ".BCB."
+  "..B.."
+}
+
+bitmap "shine" map H=gem2 {
+  "..H.."
+  ".H.H."
+  "H...H"
+  ".H.H."
+  "..H.."
+}
+
+bitmap "dust_dot" map D=dust {
+  "D"
+}
+
+layer "bg"
+tile "checker" at 0,0 40x24 step 2x2
+rect 2,5 36x14 panel
+orect 2,5 36x14 panelHi
+rect 3,6 34x12 slot
+line 11,6 11,17 slotEdge
+line 20,6 20,17 slotEdge
+line 29,6 29,17 slotEdge
+
+frames 0..7 duration 2 {
+  let t = $frameNumber / 7
+  let pulse = lerp(1, 3, ease_in_out($t))
+  let bobA = (($frameNumber + 0) % 3) - 1
+  let bobB = (($frameNumber + 1) % 3) - 1
+  let bobC = (($frameNumber + 2) % 3) - 1
+
+  push
+  layer "icons"
+  stamp "coin" at (7, 11 + $bobA) :center
+  stamp "potion" at (16, 11 + $bobB) :center
+  stamp "key" at (25, 11 + $bobC) :center :rot90
+  stamp "gem" at (34, 11 + $bobA) :center :flipx
+  pop
+
+  push
+  layer "fx"
+  glow (7, 11 + $bobA) $pulse #ffd76633
+  glow (16, 11 + $bobB) (1 + ($pulse / 2)) #ff4f9a33
+  glow (34, 11 + $bobA) $pulse #8be9ff33
+  stamp "shine" at (7, 11 + $bobA) :center :rot90 opacity (0.2 + (0.6 * ease_in_out($t)))
+  stamp "shine" at (34, 11 + $bobA) :center opacity (0.1 + (0.5 * ease_in_out($t)))
+  emit "dust_dot" at (16, 8 + $bobB) count 5 spread 4x1 time $frame vel 0x-1 jitter 1x1 life 5 fade seed (900 + $frame)
+  scatter "dust_dot" in 5,18 30x2 count (4 + ($frameNumber % 3)) seed (1000 + $frame)
+  pop
+}

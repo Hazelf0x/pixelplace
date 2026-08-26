@@ -1,0 +1,127 @@
+## Ritual VFX Loop
+## A remixable summoning circle with layered glow, orbiting runes, and periodic pulse bursts
+## Showcases: timeline animation, layered VFX composition, palette-driven mood, emit + glow + arcs
+version 0.1
+canvas 48x48
+
+pal :dawnbringer16
+pal+ void=#05040b floor=#120f19 stone=#231d2b stoneHi=#382c43 crack=#4d3857
+pal+ ember=#ff9d57 emberHot=#ffe2a8 smoke=#b8a7d033
+pal+ runeDeep=#4f2f7f runeMid=#8f59ff runeBright=#d9beff runeGlow=#8f59ff16
+pal+ beam=#d9beff24 star=#f6ecff
+
+const altarY = 34
+anchor focus 24,26
+
+bitmap "star_dot" map S=star {
+  "S"
+}
+
+bitmap "rune_chip" map A=runeMid B=runeBright {
+  ".B."
+  "BAB"
+  ".B."
+}
+
+bitmap "ember_dot" map E=ember {
+  "E"
+}
+
+bitmap "smoke_dot" map S=smoke {
+  "S"
+}
+
+group "plinth" {
+  rect -8,0 16x5 stone
+  orect -8,0 16x5 stoneHi
+  rect -6,-2 12x2 stoneHi
+  line -5,4 -2,1 crack
+  line 3,4 5,2 crack
+}
+
+layer "sky"
+fill 0,0 void
+rect 0,24 48x10 #0a0812
+scatter "star_dot" in 4,2 40x10 count 18 seed 19
+
+layer "chamber"
+poly 0,48 0,18 9,13 18,18 24,16 30,18 39,13 48,18 48,48 floor
+rect 0,38 48x10 stone
+line 0,37 47,37 stoneHi
+arc focus 18 205 335 stoneHi
+stamp "plinth" at focus :center
+
+layer "runes_static"
+arc focus 12 0 360 runeDeep
+arc focus 8 0 360 runeDeep
+px 24,14 24,38 12,26 36,26 runeDeep
+
+timeline 0..31 {
+  each {
+    let breath = smoothstep(0.08, 0.92, sin01($t))
+    let wobble = lerp(-1, 1, sin01($t * 2 + 0.2))
+    let innerR = lerp(2, 4, $breath)
+    let outerR = lerp(8, 11, $breath)
+    let orbitX = lerp(12, 36, sin01($t))
+    let orbitY = lerp(18, 34, cos01($t + 0.125))
+    let orbitX2 = lerp(12, 36, cos01($t + 0.25))
+    let orbitY2 = lerp(18, 34, sin01($t + 0.375))
+
+    layer "ritual_glow"
+    clear
+    glow (24, 31 + $wobble) 2 #ff9d5704
+
+    layer "ritual_core"
+    clear
+    ocirc focus $innerR runeBright
+    ocirc focus ($innerR + 2) runeMid
+    arc focus $outerR 0 360 runeBright
+    arc focus ($outerR + 2) 25 155 runeMid
+    arc focus ($outerR + 2) 205 335 runeMid
+    arc focus ($outerR + 4) 60 120 runeDeep
+    arc focus ($outerR + 4) 240 300 runeDeep
+    circ focus 1 emberHot
+    ellipse (24, 31 + $wobble) 4x1 ember
+    px 24,26 emberHot
+
+    layer "orbiters"
+    clear
+    stamp "rune_chip" at ($orbitX, $orbitY) :center
+    stamp "rune_chip" at (($width - 1 - $orbitX), $orbitY) :center :rot90
+    stamp "rune_chip" at ($orbitX2, $orbitY2) :center :rot180
+    stamp "rune_chip" at (($width - 1 - $orbitX2), $orbitY2) :center :rot270
+
+    layer "sigils"
+    clear
+    line 24,14 24,18 runeBright
+    line 24,34 24,38 runeBright
+    line 12,26 16,26 runeBright
+    line 32,26 36,26 runeBright
+    arc focus ($outerR - 3) 40 140 runeBright
+    arc focus ($outerR - 3) 220 320 runeBright
+
+    layer "embers"
+    clear
+    emit "ember_dot" at (24, 31 + $wobble) count 14 spread 12x3 time $frame vel 0x-1 jitter 2x1 life 8 fade seed (410 + $frameNumber)
+    emit "smoke_dot" at (24, 30 + $wobble) count 8 spread 10x3 time $frame vel 0x-1 jitter 1x1 life 10 fade seed (710 + $frameNumber)
+
+    layer "pulse"
+    clear
+
+    layer "beam"
+    clear
+  }
+
+  at 0,8,16,24 {
+    layer "pulse"
+    ocirc focus (10 + $localFrame) beam
+    ocirc focus (6 + $localFrame) #d9beff55
+  }
+
+  at 1,9,17,25 {
+    layer "beam"
+    line 24,8 24,26 #d9beff88
+    line 23,10 23,24 #8f59ff44
+    emit "rune_chip" at (24, 18) count 10 spread 6x10 time $localFrame vel 0x-1 jitter 2x2 life 5 fade seed (1300 + $frameNumber)
+  }
+}

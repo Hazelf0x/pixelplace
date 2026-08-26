@@ -1,0 +1,72 @@
+# Ember Bolt (frames-range VFX demo)
+# Demonstrates frames A..B for travel + impact phases.
+canvas 42x22
+
+pal bg=#050712 ground=#16233a caster=#5ed6ff enemy=#ff88aa
+pal bolt=#57c6ff core=#f0fbff trail=#4a9fff88 spark=#eaf7ff
+pal impact=#8ff4ff smoke=#6e95b866
+
+bitmap "bolt_core" map B=bolt C=core {
+  "..B.."
+  ".BCB."
+  "..B.."
+}
+
+bitmap "trail_dot" map T=trail {
+  "T"
+}
+
+bitmap "spark_dot" map S=spark {
+  ".S."
+  "S.S"
+  ".S."
+}
+
+bitmap "smoke_dot" map M=smoke {
+  "M"
+}
+
+group "impact_ring" {
+  ocirc 0,0 4 impact
+  ocirc 0,0 2 core
+  px 0,0 core
+}
+
+layer "bg"
+fill 0,0 bg
+
+layer "ground"
+rect 0,17 42x5 ground
+line 0,17 41,17 #22324a
+
+layer "actors"
+rect 2,10 4x7 caster
+px 3,9 core
+rect 35,9 4x8 enemy
+px 36,8 37,8 core
+
+frames 0..5 {
+  let x = 7 + ($frameNumber * 5)
+  let y = 11
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 12 spread 5x3 time $frame vel -1x0 jitter 1x1 life 5 fade seed (100 + $frameNumber)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark_dot" at ($x,$y) count 5 spread 4x3 time $frame vel -1x0 jitter 2x1 active 0..3 fade seed (200 + $frameNumber)
+}
+
+frames 6..8 {
+  let x = 32
+  let y = 11
+
+  layer "impact"
+  stamp "impact_ring" at ($x,$y)
+  glow ($x,$y) (10 - $frameNumber) impact
+  emit "spark_dot" at ($x,$y) count (14 - (($frameNumber - 6) * 4)) spread 10x7 time ($frame - 6) vel 1x0 jitter 2x2 active 0..2 fade seed (300 + $frameNumber)
+  emit "smoke_dot" at ($x,$y) count 14 spread 9x6 time ($frame - 6) vel 0x-1 jitter 1x1 life 5 fade seed (400 + $frameNumber)
+
+  layer "actors"
+  px 35,10 36,10 37,10 core
+}

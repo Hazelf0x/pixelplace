@@ -1,0 +1,143 @@
+# Campfire Clearing (timeline animation)
+# Focus: layered scene composition + animated flame body + smoke + embers/sparks.
+canvas 52x34
+
+pal skyDeep=#050812 skyMid=#0d1630 skyHaze=#1a2748 moon=#f3ecce moonGlow=#f3ecce2e
+pal pine=#13261f pineDark=#0b1813 trunk=#2f2419 ground=#1f1a17 groundHi=#2b241f ash=#49403a
+pal logA=#5f3e26 logB=#7a5131 logDark=#3d2818 stone=#68635d stoneHi=#8a857f
+pal flameEdge=#ff9a3d flameMid=#ffb347 flameCore=#ffd874 flameHot=#fff3bf ember=#ff8f3f spark=#ffe8a6 smoke=#8b96b866
+
+bitmap "star_dot" map S=moon {
+  "S"
+}
+
+bitmap "ember_dot" map E=ember {
+  "E"
+}
+
+bitmap "spark_dot" map K=spark {
+  ".K."
+  "K.K"
+  ".K."
+}
+
+bitmap "smoke_dot" map M=smoke {
+  "M"
+}
+
+group "pine_far" {
+  poly 3,0 0,5 6,5 pine
+  poly 3,3 1,8 5,8 pineDark
+  rect 2,8 2x4 trunk
+}
+
+let cx = $centerX
+let fireY = $height - 9
+
+# Sky gradient + moon
+layer "sky"
+fill 0,0 skyDeep
+rect 0,9 52x10 skyMid
+rect 0,18 52x6 skyHaze
+
+layer "moon"
+glow 42,6 6 moonGlow
+circ 42,6 2 moon
+arc 42,6 3 210 315 #d7cfae
+
+layer "stars"
+scatter "star_dot" in 0,0 ($width)x11 count 42 seed 71
+scatter "star_dot" in 0,2 ($width)x8 count 14 seed 99
+
+# Distant tree line
+layer "forest"
+stamp "pine_far" at 2,14
+stamp "pine_far" at 8,13
+stamp "pine_far" at 14,14
+stamp "pine_far" at 20,13
+stamp "pine_far" at 26,14
+stamp "pine_far" at 33,13
+stamp "pine_far" at 40,14
+stamp "pine_far" at 46,13
+
+# Ground and pit ring
+layer "ground"
+rect 0,24 52x10 ground
+rect 0,23 52x2 groundHi
+line 0,23 51,23 ash
+
+layer "pit"
+ocirc ($cx, $fireY + 3) 9 ash
+ocirc ($cx, $fireY + 3) 8 #5b5048
+ellipse ($cx, $fireY + 3) 8x2 #2b241f
+
+# Logs and stones
+layer "logs"
+line ($cx - 9, $fireY + 6) ($cx + 2, $fireY + 1) logA
+line ($cx - 8, $fireY + 7) ($cx + 3, $fireY + 2) logDark
+line ($cx - 2, $fireY + 1) ($cx + 9, $fireY + 6) logB
+line ($cx - 3, $fireY + 2) ($cx + 8, $fireY + 7) logDark
+orect ($cx - 2, $fireY + 2) 4x2 #7f5c3c
+
+layer "stones"
+ocirc ($cx - 10, $fireY + 3) 1 stone
+ocirc ($cx + 10, $fireY + 3) 1 stone
+ellipse ($cx - 7, $fireY + 8) 2x1 stoneHi
+ellipse ($cx + 7, $fireY + 8) 2x1 stone
+ellipse ($cx - 1, $fireY + 9) 3x1 stone
+ellipse ($cx + 2, $fireY + 9) 2x1 stoneHi
+
+# Animation pass: flame body + glow + smoke + embers + periodic spark bursts
+# Clear only dynamic layers each frame so static environment remains untouched.
+timeline 0..31 {
+  each {
+    let sway = (($frameNumber % 5) - 2)
+    let pulse = 3 + (($frameNumber + 1) % 2)
+    let crest = 5 + (($frameNumber % 3) - 1)
+
+    layer "flame_glow"
+    clear
+    glow ($cx + $sway, $fireY - 2) 7 #ff8f3f2d
+    glow ($cx + $sway, $fireY - 3) 4 #ffd87444
+
+    layer "flame_main"
+    clear
+    circ ($cx + $sway, $fireY - 1) $pulse flameMid
+    circ ($cx + $sway, $fireY - 3) 2 flameHot
+    ellipse ($cx + $sway, $fireY - 2) 4x2 flameCore
+    arc ($cx + $sway, $fireY - 2) $crest 220 330 flameEdge
+    arc ($cx + $sway, $fireY - 2) $crest 30 140 flameEdge
+
+    layer "embers"
+    clear
+    emit "ember_dot" at ($cx, $fireY - 1) count 18 spread 10x4 time $frame vel 0x-1 jitter 2x1 life 10 fade seed 730
+
+    layer "smoke"
+    clear
+    emit "smoke_dot" at ($cx, $fireY - 5) count 12 spread 10x3 time $frame vel 0x-1 jitter 2x1 life 12 fade seed 990
+
+    layer "sparks"
+    clear
+  }
+
+  range 0..15 {
+    let lick = lerp(0, 3, ease_in_out($localT))
+    layer "flame_main"
+    ellipse ($cx - 2, $fireY - 5 - $lick) 2x3 flameHot
+    ellipse ($cx + 2, $fireY - 4 - $lick) 2x2 flameCore
+    arc ($cx - 3, $fireY - 6 - $lick) 3 260 30 spark
+  }
+
+  range 16..31 {
+    let lick = lerp(3, 0, ease_in_out($localT))
+    layer "flame_main"
+    ellipse ($cx + 2, $fireY - 5 - $lick) 2x3 flameHot
+    ellipse ($cx - 2, $fireY - 4 - $lick) 2x2 flameCore
+    arc ($cx + 3, $fireY - 6 - $lick) 3 150 280 spark
+  }
+
+  at 4,12,20,28 {
+    layer "sparks"
+    emit "spark_dot" at ($cx + (($frameNumber % 3) - 1), $fireY - 7) count 9 spread 8x4 time $localFrame vel 0x-1 jitter 2x1 life 6 fade seed (1400 + $frameNumber)
+  }
+}

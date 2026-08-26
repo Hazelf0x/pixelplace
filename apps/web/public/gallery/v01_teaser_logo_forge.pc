@@ -1,0 +1,127 @@
+# v0.1 Teaser: Logo Forge
+# Showcase: timeline clauses, layers, mirror, transforms, lerp/ease, and emit.
+canvas 40x24
+
+pal night=#070b17 haze=#111a32 steel=#2b3f63 steelHi=#5f86c9
+pal core=#67d7ff coreHot=#eaffff accent=#7cf2be warning=#ffc971
+pal trail=#59a9ff..#dff7ff steps 5
+pal smoke=#89a4c266
+
+bitmap "spark_dot" map S=trail4 {
+  "S"
+}
+
+bitmap "smoke_dot" map M=smoke {
+  "M"
+}
+
+bitmap "chip" map A=steelHi B=core C=coreHot {
+  ".A."
+  "ABC"
+  ".A."
+}
+
+bitmap "logo_p" map S=steelHi C=core H=coreHot {
+  "SSSS."
+  "SCCS."
+  "SSSS."
+  "S...."
+  "S...."
+}
+
+group "ring" {
+  ocirc 0,0 5 steelHi
+  ocirc 0,0 3 core
+  px 0,-5 coreHot
+  px 0,5 coreHot
+  px -5,0 coreHot
+  px 5,0 coreHot
+}
+
+layer "bg"
+fill 0,0 night
+rect 0,0 ($width)x8 haze
+scatter "spark_dot" in 0,0 ($width)x8 count 22 seed 41
+
+layer "stage"
+rect ($centerX - 11, $height - 7) 22x5 steel
+orect ($centerX - 11, $height - 7) 22x5 steelHi
+rect ($centerX - 8, $height - 9) 16x2 steelHi
+
+timeline 0..23 {
+  each {
+    let cx = $centerX
+    let cy = $height - 12
+    let pulse = lerp(2, 4, ease_in_out($t))
+    let bob = (($frameNumber % 4) - 1)
+
+    push
+    layer "core"
+    stamp "ring" at ($cx, $cy + $bob) :center
+    glow ($cx, $cy + $bob) $pulse #67d7ff33
+    stamp "logo_p" at ($cx - 2, $cy - 2 + $bob)
+    pop
+
+    push
+    layer "arms"
+    mirror :x
+    line ($cx - 8, $cy + 1) ($cx - 5, $cy - 1) steelHi
+    stamp "chip" at ($cx - 10, $cy + 2) :center :rot90
+    mirror off
+    pop
+
+    push
+    layer "fx"
+    emit "spark_dot" at ($cx, $cy + $bob) count 8 spread 14x8 time $frame vel 0x-1 jitter 2x1 life 7 fade seed (400 + $frame)
+    emit "smoke_dot" at ($cx, $height - 10) count 6 spread 10x2 time $frame vel 0x-1 jitter 1x1 life 8 fade seed (600 + $frame)
+    pop
+  }
+
+  range 0..7 {
+    let scanX = lerp(2, ($width - 3), $localT)
+
+    push
+    layer "scan"
+    rect ($scanX - 1, 0) 2x($height - 4) #8ec7ff22
+    line ($scanX, 0) ($scanX, $height - 5) trail4
+    pop
+  }
+
+  range 8..15 {
+    let cx = $centerX
+    let cy = $height - 12
+    let spin = ($frameNumber % 4)
+
+    push
+    layer "fx"
+    stamp "chip" at ($cx - 7, $cy - 4) :center :rot90 opacity 0.7
+    stamp "chip" at ($cx + 7, $cy + 4) :center :rot270 opacity 0.7
+    stamp "chip" at ($cx - 7 + $spin, $cy + 4 - $spin) :center :flipx opacity 0.5
+    stamp "chip" at ($cx + 7 - $spin, $cy - 4 + $spin) :center :flipy opacity 0.5
+    pop
+  }
+
+  at 16,20 {
+    let cx = $centerX
+    let cy = $height - 12
+
+    push
+    layer "pulse"
+    glow ($cx, $cy) 7 #dff7ff33
+    ocirc ($cx, $cy) (5 + $localFrame) trail3
+    pop
+  }
+
+  at 23 {
+    let cx = $centerX
+    let cy = $height - 12
+
+    push
+    layer "fx"
+    line ($cx - 12, $cy) ($cx - 6, $cy) warning
+    line ($cx + 6, $cy) ($cx + 12, $cy) warning
+    px ($cx - 13, $cy) warning
+    px ($cx + 13, $cy) warning
+    pop
+  }
+}

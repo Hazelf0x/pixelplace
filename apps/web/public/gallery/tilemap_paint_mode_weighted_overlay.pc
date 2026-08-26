@@ -1,0 +1,83 @@
+# Paint-mode friendly tilemap + weighted variants + animated overlays
+# Suggested editor target for paint mode: Tilemap alley
+canvas 40x24
+pal #0f1122 #1e2748 #2c3c64 #4f6998 #7a95c6 #a7c4ff #f7e3b5 #ffd36e #8be4ff #5a7d2f
+
+bitmap "brick_dark" {
+  "1111"
+  "1211"
+  "1112"
+  "2111"
+}
+
+bitmap "brick_light" {
+  "2222"
+  "2122"
+  "2212"
+  "2221"
+}
+
+bitmap "window_dim" {
+  "3333"
+  "3443"
+  "3443"
+  "3333"
+}
+
+bitmap "window_lit" {
+  "7777"
+  "7667"
+  "7667"
+  "7777"
+}
+
+bitmap "road" {
+  "0000"
+  "4444"
+  "4444"
+  "0000"
+}
+
+bitmap "lamp" {
+  "..8."
+  "..8."
+  "..8."
+  ".787"
+}
+
+bitmap "rain_drop" {
+  "8"
+}
+
+tileset "street" tileSize 4x4 seed 37 {
+  tile "B" "brick_dark" weight 3
+  tile "B" "brick_light" weight 1
+  tile "W" "window_dim" weight 4
+  tile "W" "window_lit" weight 1
+  tile "R" "road"
+  tile "L" "lamp"
+}
+
+tilemap "alley" from "street" {
+  "BBBBBBBBBB"
+  "BW..WW..BB"
+  "BRRRRRRRRB"
+  "BRRRLLRRRB"
+  "BRRRRRRRRB"
+  "BBBBBBBBBB"
+}
+
+map "alley" at 0,0
+
+timeline 0..23 {
+  each {
+    emit "rain_drop" at 20,0 count 72 spread 40x24 drift 0x1 life 8 loop 8 fade seed (301 + $frame)
+  }
+
+  at 0,6,12,18 {
+    px 6,5 8
+    px 7,5 8
+    px 26,5 8
+    px 27,5 8
+  }
+}

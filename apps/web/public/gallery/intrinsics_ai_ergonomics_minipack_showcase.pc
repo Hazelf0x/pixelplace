@@ -1,0 +1,86 @@
+# AI Ergonomics Mini-Pack Showcase
+# Uses all mini-pack features:
+# - letpair size/vector aliases
+# - with layer scoped blocks
+# - timeline every cadence clauses
+canvas 48x28
+
+pal night=#071021 sky=#12223f cloud=#25385f cloudHi=#385887 rain=#7db4ff
+pal floor=#0d1528 frame=#31486f conduit=#8ec5ff bolt=#dff3ff boltGlow=#dff3ff66 spark=#effaff
+
+bitmap "spark_dot" map S=spark {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+letpair skyBand = 48x10
+letpair conduitBody = 5x8
+letpair sparkSpread = 10x4
+
+layer "base"
+rect 0,0 48x28 night
+rect 0,20 48x8 floor
+orect 2,2 44x24 frame
+line 3,10 44,10 frame
+
+timeline 0..47 {
+  each {
+    let storm = smoothstep(0.1, 0.95, sin01($t + 0.2))
+    let boltX = lerp(8, 39, noise01($frameNumber, 0, 77))
+    let wind = lerp(-2, 2, sin01($t * 2))
+
+    with layer "clouds" clear {
+      dither noise at 0,0 48x(lerp(6, 10, $storm)) cloud cloudHi seed (200 + $frameNumber)
+      dither bayer at 0,0 skyBand night sky seed 11
+    }
+
+    with layer "rain" clear {
+      repeat (lerp(20, 54, $storm)) {
+        let rx = lerp(0, 47, noise01($i, $frameNumber, 21))
+        let ry = lerp(8, 27, noise01($frameNumber, $i, 55))
+        line ($rx, $ry) ($rx + $wind, $ry + 2) rain
+      }
+    }
+
+    with layer "core" clear {
+      ellipse center (lerp(3, 6, $storm))x(lerp(2, 4, $storm)) conduit
+      glow center (lerp(4, 7, $storm)) boltGlow
+      orect ($centerX - 2, $height - 10) conduitBody conduit
+    }
+
+    with layer "bolt" clear {
+      line ($boltX, 2) ($centerX, ($height - 10)) bolt
+      glow ($centerX, ($height - 10)) (lerp(0, 4, step(0.78, sin01($t * 3)))) boltGlow
+    }
+  }
+
+  every 12 {
+    with layer "sparks" clear {
+      emit "spark_dot" at ($centerX, ($height - 10))
+        count 14
+        spread sparkSpread
+        time $localFrame
+        vel 0x-1
+        jitter 2x1
+        life 7
+        fade
+        seed (800 + $frameNumber)
+    }
+  }
+
+  every 12 offset 6 {
+    with layer "sparks" {
+      emit "spark_dot" at ($centerX, ($height - 10))
+        count 22
+        spread 14x6
+        time $localFrame
+        vel 0x-2
+        jitter 3x2
+        active 0..5
+        life 7
+        fade
+        seed (1200 + $frameNumber)
+    }
+  }
+}

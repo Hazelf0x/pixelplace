@@ -1,0 +1,105 @@
+# Fireball Spell v2
+# Uses new animation ergonomics:
+# - frame duration holds
+# - built-in frame vars: $frame, $frameNumber, $frameCount
+# - stamp :center for footprint-centered bitmap placement
+canvas 32x20
+
+pal fire=#5a0000..#fff7b2 steps 6
+pal bg=#07060e rune=#5cc6ff runeGlow=#2f84ff33 smoke=#4b2b2b55 aura=#ff7a3324 ember=#ff934466 spark=#ffe58a
+
+bitmap "orb" map A=fire1 B=fire2 C=fire3 D=fire4 E=fire5 {
+  "...C..."
+  "..BCB.."
+  ".BCDCB."
+  ".CDEDC."
+  ".BCDCB."
+  "..BCB.."
+  "...C..."
+}
+
+bitmap "flare" map H=fire4 M=fire2 L=fire0 {
+  "..H.."
+  ".HHM."
+  "HMMM."
+  ".MLL."
+  "..L.."
+}
+
+bitmap "spark_cross" map S=spark {
+  ".S."
+  "S.S"
+  ".S."
+}
+
+bitmap "spark_dot" map S=spark {
+  "S"
+}
+
+bitmap "ember_dot" map E=ember {
+  "E"
+}
+
+layer "bg"
+fill 0,0 bg
+
+layer "caster"
+glow 3,10 5 runeGlow
+ocirc 3,10 3 rune
+line 3,7 3,13 rune
+line 0,10 6,10 rune
+px 1,8 5,8 1,12 5,12 rune
+
+# Frame 0 is held for 4 ticks (frame indexes 0..3).
+frame 0 duration 4 {
+  let x = 3 + ($frame * 3)
+  let y = 10 + $frameNumber
+  let tailBase = $x - ($frameCount - 1)
+
+  layer "trail"
+  cursor ($x - 3, $y)
+  repeat ($frame + 2) step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($tailBase, $y + 2) ember
+  scatter "ember_dot" in ($x - 10, $y - 2) 8x5 count 3 seed (900 + $frame)
+
+  layer "core"
+  glow ($x, $y) 5 aura
+  stamp "orb" at ($x, $y) :center
+  stamp "flare" at ($x + 4, $y - 1) :center
+  stamp "flare" at ($x + 4, $y + 1) :center :flipy
+  px ($x + 5, $y) fire5
+
+  layer "sparks"
+  scatter "spark_dot" in ($x + 2, $y - 3) 6x6 count 3 seed (1200 + $frame)
+  stamp "spark_cross" at ($x + 5, $y - 2) :center
+}
+
+# Frame 1 is held for 4 ticks (frame indexes 4..7), with a slightly lower/denser burst.
+frame 1 duration 4 {
+  let x = 3 + ($frame * 3)
+  let y = 10 + $frameNumber
+  let tailBase = $x - ($frameCount - 1)
+
+  layer "trail"
+  cursor ($x - 3, $y + 1)
+  repeat ($frame + 2) step -2x0 {
+    ellipse 0,0 2x1 smoke
+  }
+  px ($tailBase + 1, $y + 2) ember
+  scatter "ember_dot" in ($x - 11, $y - 1) 9x5 count 4 seed (1500 + $frame)
+
+  layer "core"
+  glow ($x + 1, $y) 5 aura
+  stamp "orb" at ($x, $y) :center
+  stamp "flare" at ($x + 4, $y - 2) :center
+  stamp "flare" at ($x + 4, $y + 2) :center :flipy
+  px ($x + 6, $y) fire5
+  px ($x + 5, $y - 1) fire4
+  px ($x + 5, $y + 1) fire4
+
+  layer "sparks"
+  scatter "spark_dot" in ($x + 3, $y - 3) 7x6 count 4 seed (2200 + $frame)
+  stamp "spark_cross" at ($x + 6, $y + $frameNumber - 2) :center
+}

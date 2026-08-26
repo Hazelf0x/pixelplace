@@ -1,0 +1,153 @@
+# Rainy Alley (tilemap + layered timeline stress-test)
+# Focus: complex scene composition with tilemaps, dynamic layer clears, window flicker, rain, mist, and lightning.
+canvas 64x40
+
+pal night=#090f1f haze=#121a32 cloud=#1b2748 cloudHi=#25365d
+pal building=#1b2233 brickHi=#2a334a roof=#121a29 trim=#3a4b6a
+pal road=#14161d roadLine=#343949 puddle=#1b2f4a puddleHi=#30527c
+pal neon=#65d1ff neonSoft=#65d1ff44 windowOff=#1a1f2d windowOn=#ffd07a rain=#7dc9ff mist=#a6c8ff33 flash=#f3f8ff
+
+bitmap "roof_tile" map R=roof T=trim {
+  "RRRR"
+  "RTTR"
+  "RTTR"
+  "RRRR"
+}
+
+bitmap "brick_tile" map B=building H=brickHi W=windowOff {
+  "BHBH"
+  "BBBB"
+  "HBHB"
+  "BBBB"
+}
+
+bitmap "window_glow_tile" map O=windowOn N=neon {
+  "OOOO"
+  "ONNO"
+  "ONNO"
+  "OOOO"
+}
+
+bitmap "rain_drop" map R=rain {
+  "R"
+}
+
+bitmap "mist_dot" map M=mist {
+  "M"
+}
+
+group "lamp_post" {
+  line 0,0 0,-10 trim
+  orect -1,-11 3x2 trim
+  glow 0,-10 3 neonSoft
+  px 0,-10 neon
+}
+
+tileset "alley_block" tileSize 4x4 {
+  tile "R" "roof_tile"
+  tile "B" "brick_tile"
+}
+
+tilemap "city_front" from "alley_block" {
+  "..RRRRRR..RRRR.."
+  "..BBBBBB..BBBB.."
+  "..BBBBBB..BBBB.."
+  "..BBBBBB..BBBB.."
+  "..BBBBBB..BBBB.."
+  "..BBBBBB..BBBB.."
+}
+
+tileset "window_fx_tiles" tileSize 4x4 {
+  tile "L" "window_glow_tile"
+}
+
+tilemap "window_pattern_a" from "window_fx_tiles" {
+  "..L.LL.L..L.L..."
+  "..LL..LL..LL.L.."
+  "..L...L...L..L.."
+}
+
+tilemap "window_pattern_b" from "window_fx_tiles" {
+  "..LL..LL..L..L.."
+  "..L.L..L..LLL..."
+  "..L..L....L.L..."
+}
+
+layer "sky"
+fill 0,0 night
+rect 0,8 64x8 haze
+rect 0,16 64x8 cloud
+
+layer "horizon"
+line 0,23 63,23 cloudHi
+line 0,24 63,24 #0d1325
+
+layer "buildings"
+map "city_front" at 0,8
+
+layer "neon_signs"
+glow 18,18 4 neonSoft
+rect 16,17 6x3 neon
+glow 49,16 3 neonSoft
+rect 48,15 5x3 neon
+
+layer "street"
+rect 0,30 64x10 road
+line 0,32 63,32 roadLine
+ellipse 18,33 8x2 puddle
+ellipse 44,34 10x2 puddle
+arc 44,34 10 205 335 puddleHi
+
+layer "props"
+stamp "lamp_post" at 9,30
+stamp "lamp_post" at 55,30
+
+timeline 0..23 {
+  each {
+    let wind = lerp(-2, 2, sin01($t + 0.15))
+    let drift = lerp(0, 2, cos01($t + 0.35))
+
+    layer "rain_far"
+    clear
+    emit "rain_drop" at ($centerX + $wind, 2) count 55 spread 70x3 time $frame vel -1x2 jitter 1x1 life 14 fade seed 410
+
+    layer "rain_near"
+    clear
+    emit "rain_drop" at ($centerX + $wind, 0) count 80 spread 76x2 time $frame vel -2x3 jitter 2x1 life 10 fade seed 911
+
+    layer "mist"
+    clear
+    emit "mist_dot" at ($centerX + $drift, $height - 6) count 22 spread 52x3 time $frame vel 1x0 jitter 2x0 life 18 fade seed 202
+
+    layer "windows_fx"
+    clear
+
+    layer "lightning"
+    clear
+  }
+
+  at 1,4,7,10,13,16,19,22 {
+    layer "windows_fx"
+    map "window_pattern_a" at 0,14
+  }
+
+  at 2,5,8,11,14,17,20,23 {
+    layer "windows_fx"
+    map "window_pattern_b" at 0,14
+  }
+
+  at 6,15 {
+    layer "lightning"
+    glow 46,6 20 flash
+    line 47,2 43,12 flash
+    line 43,12 46,18 flash
+    line 46,18 41,28 flash
+  }
+
+  at 7,16 {
+    layer "lightning"
+    glow 44,8 12 #f3f8ff66
+    line 45,3 42,11 #f3f8ff
+    line 42,11 44,18 #f3f8ff
+  }
+}

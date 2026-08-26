@@ -1,0 +1,365 @@
+# Codex Showcase: Aetherport Megacity (Animated)
+canvas 96x64
+
+# --- Palette ---
+# Bitmap-friendly base indices (0-9)
+pal bark=#3b2618 leaf_d=#12361c leaf=#1f5a2f leaf_l=#3f8c4c
+pal metal_d=#465264 metal_l=#7f92aa brass=#bd8635 lamp=#ffd56e banner=#8f2d30 fog=#7f8799
+
+# Scene gradients and named materials
+pal sky=#08122b..#4f7fae steps 9
+pal haze=#415f7f..#9ebcd4 steps 4
+pal water=#07131f..#2d5b7e steps 6
+pal stone=#4e5366 stone_d=#363a49 stone_l=#6f7690 roof=#5c2d1c roof_l=#8a4c30
+pal window=#ffdca2 window_dim=#c89c62 bridge=#2a2e3a rail=#6a7288
+pal pier=#2f241f plank=#4a3a30 rope=#7b5a2c grass=#304626 reed=#4f6a38
+pal moon=#fff2cd glow=#ffe39f cloud=#ced7e4 mist=#a8bcd080
+
+# --- Layout variables ---
+let horizon = 31
+let water_top = 42
+let cit_x = 36
+let cit_y = 20
+let cit_w = 24
+let cit_h = 22
+
+# --- Semantic anchors ---
+anchor moon_core 74,10
+anchor cit_gate ($cit_x + 12, $cit_y + 16)
+anchor beacon_origin 48,8
+anchor dock_center 48,54
+
+# --- Bitmaps ---
+bitmap "star" {
+  ".7."
+  "777"
+  ".7."
+}
+
+bitmap "twinkle" {
+  "7.7"
+  ".7."
+  "7.7"
+}
+
+bitmap "cloudlet" {
+  "..99.."
+  ".9999."
+  "999999"
+  ".9999."
+}
+
+bitmap "pine" {
+  "..2.."
+  ".232."
+  "22322"
+  ".212."
+  "..0.."
+  "..0.."
+}
+
+bitmap "docklamp" {
+  ".7."
+  ".6."
+  ".5."
+  ".4."
+  ".4."
+}
+
+bitmap "wave" {
+  "....5..."
+  "..55..5."
+  ".5..55.."
+}
+
+bitmap "cobble" {
+  "4454"
+  "5445"
+  "4544"
+  "5445"
+}
+
+bitmap "reed_tuft" {
+  ".3."
+  "232"
+  ".2."
+}
+
+bitmap "airship" {
+  ".....99........"
+  "...955559......"
+  "..95555559....."
+  ".9556666559...."
+  "955555555559..."
+  ".9555555559...."
+  "..95888859....."
+  "...955559......"
+  ".....44........"
+}
+
+# --- Reusable groups ---
+group "arched_window" {
+  rect 0,1 3x3 window_dim
+  px 1,0 window
+  px 1,2 window
+}
+
+group "tower_spire" {
+  rect 0,4 8x20 stone
+  rect 1,5 6x18 stone_d
+  poly 0,4 4,0 8,4 roof
+  px 1,4 7,4 roof_l
+  stamp "arched_window" at 2,9
+  stamp "arched_window" at 2,14
+  stamp "arched_window" at 2,19
+}
+
+group "bridge_lamp" {
+  line 0,0 0,5 metal_l
+  stamp "docklamp" at -1,-1
+}
+
+group "dock_crate" {
+  rect 0,0 3x3 plank
+  orect 0,0 3x3 rope
+  px 1,1 rope
+}
+
+# --- Sky backdrop ---
+layer "sky"
+rect 0,0 96x4 sky0
+rect 0,4 96x4 sky1
+rect 0,8 96x4 sky2
+rect 0,12 96x4 sky3
+rect 0,16 96x4 sky4
+rect 0,20 96x4 sky5
+rect 0,24 96x3 sky6
+rect 0,27 96x2 sky7
+rect 0,29 96x3 sky8
+
+# Moon and atmospheric glow
+circ moon_core 6 glow
+circ moon_core 4 moon
+px 72,8 75,11 73,12 glow
+
+# High clouds
+stamp "cloudlet" at 10,6
+stamp "cloudlet" at 24,9 :flipx
+stamp "cloudlet" at 58,5
+stamp "cloudlet" at 82,8 :flipx
+stamp "cloudlet" at 44,12 :flipy
+
+# Stars
+scatter "star" in 2,1 92x16 count 36 seed 9001
+scatter "twinkle" in 4,0 88x12 count 10 seed 42
+
+# --- Haze band near horizon ---
+layer "haze"
+rect 0,26 96x2 haze1
+rect 0,28 96x2 haze2
+rect 0,30 96x2 haze3
+rect 0,31 96x4 mist
+
+# --- Distant mountains ---
+layer "mountains"
+poly (0,$horizon) (12,20) (24,$horizon) stone_d
+poly (14,$horizon) (29,18) (44,$horizon) stone
+poly (34,$horizon) (50,16) (66,$horizon) stone_l
+poly (54,$horizon) (69,19) (84,$horizon) stone
+poly (74,$horizon) (88,21) (96,$horizon) stone_d
+
+line 12,20 15,23 stone_l
+line 29,18 33,22 stone_l
+line 50,16 55,22 stone_l
+line 69,19 73,23 stone_l
+
+# --- Rear city silhouette ---
+layer "back_city"
+rect 0,31 96x11 bridge
+repeat 12 step 8x0 {
+  let top = 23 + (($i * 7) % 6)
+  rect (1,$top) 5x20 bridge
+  px (2,$top) (3,$top) rail
+  px (2,$top + 4) (4,$top + 7) (3,$top + 11) window_dim
+}
+
+# --- Mid-city walkways and bridges ---
+layer "mid_city"
+line 0,38 95,38 rail
+line 0,39 95,39 metal_d
+repeat 16 step 6x0 {
+  rect 2,39 2x4 stone_d
+}
+repeat 15 step 6x0 {
+  line 4,39 8,39 rail
+}
+
+# --- Main citadel mass ---
+layer "citadel"
+rect $cit_x,$cit_y 24x22 stone
+rect ($cit_x + 1,$cit_y + 1) 22x20 stone_d
+orect $cit_x,$cit_y 24x22 stone_l
+
+# Dome and crown
+circ ($cit_x + 12, $cit_y - 1) 6 stone
+circ ($cit_x + 12, $cit_y - 1) 4 stone_l
+ocirc ($cit_x + 12, $cit_y - 1) 6 roof_l
+
+# Center gate
+rect ($cit_x + 9,$cit_y + 13) 6x9 bridge
+ocirc ($cit_x + 12,$cit_y + 13) 3 metal_l
+line ($cit_x + 12,$cit_y + 13) ($cit_x + 12,$cit_y + 21) metal_d
+px ($cit_x + 11,$cit_y + 17) ($cit_x + 13,$cit_y + 17) window_dim
+
+# Main facade windows
+repeat 4 step 5x0 {
+  stamp "arched_window" at ($cit_x + 2, $cit_y + 5)
+}
+
+# Mirrored side towers + banners
+push
+mirror :x
+stamp "tower_spire" at 28,14
+line 32,14 32,8 metal_d
+px 33,8 34,8 banner
+px 33,9 banner
+pop
+
+# Gate lamps mirrored around center axis
+push
+mirror :x
+stamp "bridge_lamp" at 34,35
+pop
+
+# --- Foreground bridge crossing water ---
+layer "bridge_front"
+rect 14,40 68x3 stone
+line 14,40 81,40 stone_l
+line 14,42 81,42 stone_d
+repeat 18 step 4x0 {
+  rect 14,43 1x5 stone_d
+}
+
+# --- Water body ---
+layer "water"
+rect 0,$water_top 96x2 water0
+rect 0,($water_top + 2) 96x2 water1
+rect 0,($water_top + 4) 96x2 water2
+rect 0,($water_top + 6) 96x2 water3
+rect 0,($water_top + 8) 96x2 water4
+rect 0,($water_top + 10) 96x12 water5
+
+tile "wave" at 0,($water_top + 1) 96x20 step 8x3
+scatter "star" in 6,44 84x12 count 20 seed 2112
+
+# Reflections from citadel lights
+px 45,46 47,47 49,46 51,47 glow
+px 43,49 46,50 50,50 53,49 window_dim
+line 40,52 56,52 haze2
+
+# --- Dock and foreground vegetation ---
+layer "foreground"
+rect 0,54 96x10 pier
+tile "cobble" at 0,54 96x10 step 4x4
+rect 0,52 96x2 plank
+line 0,52 95,52 rope
+
+# Dock pylons
+repeat 12 step 8x0 {
+  rect 2,52 1x12 bark
+}
+
+# Rails and posts using cursor + current color
+color rail
+cursor 6,53
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+px +8,+0
+
+# Lamps and crates
+repeat 5 step 18x0 {
+  stamp "docklamp" at 6,49
+}
+stamp "dock_crate" at 20,58
+stamp "dock_crate" at 24,59
+stamp "dock_crate" at 70,58
+stamp "dock_crate" at 74,57
+
+# Trees and reeds
+stamp "pine" at 4,46
+stamp "pine" at 11,47
+stamp "pine" at 86,46 :flipx
+stamp "pine" at 79,47 :flipx
+scatter "reed_tuft" in 0,50 96x4 count 28 seed 333
+
+# Soft shoreline mist layer
+layer "mist_fx"
+rect 0,50 96x4 mist
+
+# Static distant airships
+layer "airships_static"
+stamp "airship" at 8,14
+stamp "airship" at 72,18 :flipx
+
+# Beacon target marker near gate
+layer "lights"
+stamp "twinkle" at cit_gate
+line beacon_origin 48,18 metal_l
+circ beacon_origin 1 lamp
+px 48,9 47,9 49,9 glow
+
+# --- Animation frames: moving patrol ship + sweeping beacon ---
+frame 1 {
+  layer "anim"
+  stamp "airship" at 30,11
+  poly beacon_origin 72,6 72,12 glow
+  px 34,19 36,20 38,21 lamp
+  line 32,46 38,47 glow
+}
+
+frame 2 {
+  layer "anim"
+  stamp "airship" at 34,10
+  poly beacon_origin 66,7 68,14 glow
+  px 38,18 40,19 42,20 lamp
+  line 36,47 42,48 glow
+}
+
+frame 3 {
+  layer "anim"
+  stamp "airship" at 38,11
+  poly beacon_origin 58,8 62,15 glow
+  px 42,19 44,20 46,21 lamp
+  line 40,48 46,49 glow
+}
+
+frame 4 {
+  layer "anim"
+  stamp "airship" at 42,12
+  poly beacon_origin 48,8 54,15 glow
+  px 46,20 48,21 50,22 lamp
+  line 44,49 50,50 glow
+}
+
+frame 5 {
+  layer "anim"
+  stamp "airship" at 38,11
+  poly beacon_origin 40,8 46,14 glow
+  px 42,19 44,20 46,21 lamp
+  line 40,48 46,49 glow
+}
+
+frame 6 {
+  layer "anim"
+  stamp "airship" at 34,10
+  poly beacon_origin 58,8 62,15 glow
+  px 38,18 40,19 42,20 lamp
+  line 36,47 42,48 glow
+}

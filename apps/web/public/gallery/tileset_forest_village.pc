@@ -1,0 +1,200 @@
+## Tileset Forest Village
+## A small storybook village scene built from reusable terrain and cottage tiles
+## Showcases: tileset/tilemap/map, weighted tile variants, overlay dressing, game-ready world chunk composition
+version 0.1
+canvas 64x64
+
+pal :dawnbringer16
+pal+ skyTop=#10203b skyMid=#294874 skyGlow=#f1b86a
+pal+ cloud=#f9e5bf hillDark=#24352d hillMid=#355140
+pal+ grass=#4f7a3d grassHi=#7fb069 flower=#f6d890 path=#9e7b51 pathHi=#c79a6d
+pal+ roof=#8e4f4a roofHi=#c97865 wall=#d9c7a6 timber=#6c4d3d
+pal+ water=#3f7aa8 waterHi=#8fc7ea cropSoil=#6a4a34 cropLeaf=#78b35c
+pal+ pine=#214032 pineHi=#3d6a52 smoke=#ffffff55 windowWarm=#ffcf75 windowCore=#fff2bb
+pal+ sign=#caa06a shadow=#00000033
+
+bitmap "grass_a" map G=grass H=grassHi {
+  "GHGG"
+  "GGHG"
+  "HGGG"
+  "GGGH"
+}
+
+bitmap "grass_b" map G=grass H=grassHi {
+  "GGHG"
+  "HGGG"
+  "GGGH"
+  "GHGG"
+}
+
+bitmap "flower_patch" map G=grass H=grassHi F=flower {
+  "GHFG"
+  "FGHG"
+  "HGGF"
+  "GGGH"
+}
+
+bitmap "path_a" map P=path Q=pathHi {
+  "PQQP"
+  "QPQP"
+  "PQQP"
+  "QPQP"
+}
+
+bitmap "path_b" map P=path Q=pathHi {
+  "QPQP"
+  "PQQP"
+  "QPQP"
+  "PQQP"
+}
+
+bitmap "roof_tile" map R=roof H=roofHi {
+  "RHHR"
+  "HRRH"
+  "RHHH"
+  "RRRR"
+}
+
+bitmap "wall_tile" map W=wall T=timber {
+  "WWWW"
+  "TTWT"
+  "WWWW"
+  "WTTW"
+}
+
+bitmap "water_a" map W=water H=waterHi {
+  "WHWW"
+  "WWHW"
+  "HWWW"
+  "WWWH"
+}
+
+bitmap "water_b" map W=water H=waterHi {
+  "WWHW"
+  "HWWW"
+  "WWWH"
+  "WHWW"
+}
+
+bitmap "crop_tile" map S=cropSoil L=cropLeaf {
+  "SSSS"
+  "LSSL"
+  "SSSS"
+  "LSLS"
+}
+
+tileset "village" tileSize 4x4 seed 19 {
+  tile "G" "grass_a" weight 5
+  tile "G" "grass_b" weight 4
+  tile "F" "flower_patch" weight 2
+  tile "P" "path_a" weight 3
+  tile "P" "path_b" weight 2
+  tile "R" "roof_tile"
+  tile "H" "wall_tile"
+  tile "W" "water_a" weight 2
+  tile "W" "water_b" weight 1
+  tile "C" "crop_tile"
+}
+
+tilemap "forest_village" from "village" {
+  "................"
+  "................"
+  "..GGGGGGGGGGGG.."
+  "..GGRRRGGGRRRG.."
+  ".GGRHHRGGRHHRGG."
+  ".GGPHHHPPHHHPGG."
+  ".GGPPPPPPPPPGGG."
+  ".GGPFGGGPPFGGGG."
+  ".GGGGGGGPPGGWWG."
+  ".GGGFGGGPPGWWWG."
+  ".GGCCGGGPPGGWWG."
+  "GGCCCCGGPPGGGGGG"
+}
+
+group "pine_tall" pivot 5,23 {
+  rect 4,15 2x9 timber
+  rect 2,11 6x5 pine
+  rect 1,7 8x5 pineHi
+  rect 0,3 10x5 pine
+  px 4,2 5,2 3,1 6,1 4,0 5,0 pineHi
+}
+
+group "pine_small" pivot 4,17 {
+  rect 3,11 2x7 timber
+  rect 1,7 6x5 pine
+  rect 0,4 8x4 pineHi
+  px 3,3 4,3 2,2 5,2 3,1 4,1 pine
+}
+
+group "smoke_puff" pivot 1,1 {
+  glow 1,1 3 smoke
+  px 0,1 1,0 1,1 2,1 1,2 smoke
+}
+
+group "signpost" pivot 1,5 {
+  rect 1,0 1x6 timber
+  rect 0,1 4x2 sign
+  px 1,2 2,2 path
+}
+
+layer "sky"
+rect 0,0 64x8 skyTop
+rect 0,8 64x8 skyMid
+rect 0,16 64x8 skyGlow
+line 6,9 17,8 cloud
+line 42,7 56,8 cloud
+px 18,8 19,8 20,9 44,8 45,8 54,7 cloud
+
+layer "hills"
+poly 0,24 10,18 18,20 28,16 39,19 50,14 63,18 63,32 0,32 hillDark
+poly 0,28 9,23 18,25 27,21 37,24 47,20 57,23 63,21 63,32 0,32 hillMid
+
+layer "meadow"
+rect 0,24 64x40 grass
+rect 0,24 64x5 grassHi
+line 0,31 63,31 grassHi
+px 3,35 9,37 55,36 60,34 flower
+px 6,42 11,45 58,47 flower
+
+layer "back_trees"
+stamp "pine_small" at (6, 28) :pivot
+stamp "pine_tall" at (16, 28) :pivot
+stamp "pine_small" at (48, 28) :pivot
+stamp "pine_tall" at (57, 28) :pivot
+
+layer "village"
+map "forest_village" at 0,16
+
+layer "details"
+rect 14,37 2x7 timber
+px 12,37 13,37 12,38 13,38 windowWarm
+px 12,38 13,38 windowCore
+px 19,37 20,37 19,38 20,38 windowWarm
+px 19,38 20,38 windowCore
+line 12,43 21,43 shadow
+
+rect 42,37 2x7 timber
+px 40,37 41,37 40,38 41,38 windowWarm
+px 40,38 41,38 windowCore
+px 47,37 48,37 47,38 48,38 windowWarm
+px 47,38 48,38 windowCore
+line 40,43 49,43 shadow
+
+stamp "smoke_puff" at (16, 29) :pivot
+stamp "smoke_puff" at (17, 26) :pivot
+stamp "smoke_puff" at (45, 29) :pivot
+stamp "smoke_puff" at (46, 26) :pivot
+
+stamp "signpost" at (29, 47) :pivot
+glow 12,38 3 #ffcf7516
+glow 20,38 3 #ffcf7516
+glow 40,38 3 #ffcf7516
+glow 48,38 3 #ffcf7516
+line 47,51 57,49 waterHi
+line 48,54 58,53 waterHi
+px 50,58 51,58 53,57 54,57 waterHi
+
+layer "foreground"
+stamp "pine_tall" at (2, 56) :pivot
+stamp "pine_small" at (58, 59) :pivot
+line 0,63 63,63 shadow

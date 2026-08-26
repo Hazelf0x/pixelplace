@@ -1,0 +1,206 @@
+# Arcane Lance v2 (emit time + vel/jitter + active/life/fade)
+# Gameplay use: travel, impact burst, and dissipating aftermath.
+canvas 44x24
+
+pal bg=#050712 floor=#152238 caster=#5ed6ff enemy=#ff88a8
+pal boltGlow=#57c6ff boltCore=#e8fbff trail=#4a9fff88 spark=#eaf7ff
+pal impact=#8ff4ff impactHot=#ffffff smoke=#6e95b866
+
+bitmap "bolt_core" map G=boltGlow C=boltCore {
+  "..G.."
+  ".GCG."
+  "..G.."
+}
+
+bitmap "trail_dot" map T=trail {
+  "T"
+}
+
+bitmap "spark" map S=spark {
+  ".S."
+  "S.S"
+  ".S."
+}
+
+bitmap "shard" map I=impact {
+  "I."
+  ".I"
+}
+
+bitmap "smoke_dot" map M=smoke {
+  "M"
+}
+
+group "impact_ring" {
+  ocirc 0,0 5 impact
+  ocirc 0,0 3 impactHot
+  px 0,0 impactHot
+}
+
+layer "bg"
+fill 0,0 bg
+
+layer "floor"
+rect 0,18 44x6 floor
+line 0,18 43,18 #22324a
+
+layer "actors"
+rect 2,11 4x7 caster
+px 3,10 boltCore
+rect 37,10 4x8 enemy
+px 38,9 39,9 impactHot
+
+frame 0 {
+  let x = 8
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 14
+  spread 6x3
+  time $frame
+  vel -1x0
+  jitter 1x1
+  life 6
+  fade
+  seed (110 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 6 spread 4x3 time $frame vel -1x0 jitter 2x1 active 0..4 fade seed (210 + $frame)
+}
+
+frame 1 {
+  let x = 13
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 14
+  spread 6x3
+  time $frame
+  vel -1x0
+  jitter 1x1
+  life 6
+  fade
+  seed (110 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 6 spread 4x3 time $frame vel -1x0 jitter 2x1 active 0..4 fade seed (210 + $frame)
+}
+
+frame 2 {
+  let x = 18
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 14
+  spread 6x3
+  time $frame
+  vel -1x0
+  jitter 1x1
+  life 6
+  fade
+  seed (110 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 7 spread 4x3 time $frame vel -1x0 jitter 2x1 active 0..4 fade seed (210 + $frame)
+}
+
+frame 3 {
+  let x = 23
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 14
+  spread 6x3
+  time $frame
+  vel -1x0
+  jitter 1x1
+  life 6
+  fade
+  seed (110 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 7 spread 4x3 time $frame vel -1x0 jitter 2x1 active 0..4 fade seed (210 + $frame)
+}
+
+frame 4 {
+  let x = 28
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 2,$y) count 14
+  spread 6x3
+  time $frame
+  vel -1x0
+  jitter 1x1
+  life 6
+  fade
+  seed (110 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+  emit "spark" at ($x,$y) count 8 spread 5x4 time $frame vel -1x0 jitter 2x1 active 0..4 fade seed (210 + $frame)
+}
+
+frame 5 {
+  let x = 33
+  let y = 12
+
+  layer "trail"
+  emit "trail_dot" at ($x - 3,$y) count 10 spread 5x3 time $frame vel -1x0 jitter 1x1 life 6 fade seed (110 + $frame)
+
+  layer "fx"
+  stamp "bolt_core" at ($x,$y) :center
+
+  layer "impact"
+  stamp "impact_ring" at ($x,$y)
+  glow ($x,$y) 5 impact
+  emit "shard" at ($x,$y) count 18 spread 10x8 time ($frame - 5) vel 2x0 jitter 3x2 active 0..3 fade seed (510 + $frame)
+  emit "spark" at ($x,$y) count 20 spread 12x9 time ($frame - 5) vel 1x0 jitter 2x2 active 0..2 fade seed (610 + $frame)
+  emit "smoke_dot" at ($x,$y) count 12 spread 8x6 time ($frame - 5) vel 0x-1 jitter 1x1 life 5 fade seed (710 + $frame)
+
+  layer "actors"
+  px 37,11 38,11 39,11 40,11 impactHot
+}
+
+frame 6 {
+  let x = 33
+  let y = 12
+
+  layer "impact"
+  glow ($x,$y) 6 impact
+  stamp "impact_ring" at ($x,$y)
+  emit "shard" at ($x,$y) count 18 spread 10x8 time ($frame - 5) vel 2x0 jitter 3x2 active 0..3 fade seed (510 + $frame)
+  emit "spark" at ($x,$y) count 14 spread 11x8 time ($frame - 5) vel 1x0 jitter 2x2 active 0..2 fade seed (610 + $frame)
+  emit "smoke_dot" at ($x,$y) count 14 spread 9x7 time ($frame - 5) vel 0x-1 jitter 1x1 life 5 fade seed (710 + $frame)
+
+  layer "actors"
+  px 37,10 38,10 39,10 40,10 impactHot
+}
+
+frame 7 {
+  let x = 33
+  let y = 12
+
+  layer "impact"
+  glow ($x,$y) 4 smoke
+  emit "shard" at ($x,$y) count 10 spread 9x7 time ($frame - 5) vel 2x0 jitter 3x2 active 0..3 fade seed (510 + $frame)
+  emit "spark" at ($x,$y) count 8 spread 9x7 time ($frame - 5) vel 1x0 jitter 2x2 active 0..2 fade seed (610 + $frame)
+  emit "smoke_dot" at ($x,$y) count 16 spread 11x8 time ($frame - 5) vel 0x-1 jitter 2x1 life 5 fade seed (710 + $frame)
+}
+
+frame 8 {
+  let x = 33
+  let y = 12
+
+  layer "impact"
+  glow ($x,$y) 3 smoke
+  emit "shard" at ($x,$y) count 6 spread 8x6 time ($frame - 5) vel 2x0 jitter 3x2 active 0..3 fade seed (510 + $frame)
+  emit "smoke_dot" at ($x,$y) count 14 spread 12x8 time ($frame - 5) vel 0x-1 jitter 2x1 life 5 fade seed (710 + $frame)
+
+  layer "actors"
+  px 38,11 39,11 impactHot
+}

@@ -1,0 +1,86 @@
+canvas 32x20
+pal night0=#040812 night1=#0b1530 star=#dfe8ff moon=#ffd27a cloud=#6f8ec966 cloudHi=#9db6e588 trail=#6ff3ff core=#ffffff hull=#5f7ca8 glass=#aee7ff flame=#ff9d4d ember=#ffe08a
+
+bitmap "star" map S=star {
+  "S"
+}
+
+bitmap "skydart" map H=hull G=glass F=flame {
+  "..HHH.."
+  ".HHGHH."
+  "HHGGGHH"
+  ".HHHHH."
+  "...F..."
+}
+
+bitmap "spark" map E=ember C=core {
+  ".E."
+  "ECE"
+  ".E."
+}
+
+# Static night backdrop
+rect 0,0 32x20 night0
+rect 0,0 32x10 night1
+scatter "star" in 0,0 32x10 count 30 seed 77
+circ 25,4 2 moon
+glow 25,4 4 #ffd27a66
+
+push
+layer "clouds"
+rect 2,12 10x2 cloud
+rect 18,13 11x2 cloud
+rect 5,11 6x1 cloudHi
+pop
+
+# Launch arc: left -> peak
+frames 0..11 {
+  let t = $frameNumber / 11
+  let eased = ease_in_out($t)
+  let shipX = lerp(3, 16, $eased)
+  let shipY = lerp(15, 6, $eased)
+
+  push
+  layer "fx"
+  glow ($shipX, $shipY) 3 #6ff3ff88
+  emit "spark" at ($shipX - 3, $shipY + 1)
+    count 10
+    spread 3x2
+    vel -1x0
+    jitter 2x1
+    life 4
+    fade
+    seed (100 + $frame)
+  pop
+
+  push
+  layer "ship"
+  stamp "skydart" at ($shipX, $shipY) :center
+  pop
+}
+
+# Dive arc: peak -> right horizon
+frames 12..23 {
+  let t = ($frameNumber - 12) / 11
+  let eased = ease_in_out($t)
+  let shipX = lerp(16, 28, $eased)
+  let shipY = lerp(6, 12, $eased)
+
+  push
+  layer "fx"
+  glow ($shipX, $shipY) 3 #6ff3ff88
+  emit "spark" at ($shipX - 3, $shipY + 1)
+    count 12
+    spread 4x2
+    vel -2x1
+    jitter 2x1
+    life 4
+    fade
+    seed (300 + $frame)
+  pop
+
+  push
+  layer "ship"
+  stamp "skydart" at ($shipX, $shipY) :center
+  pop
+}

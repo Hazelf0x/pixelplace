@@ -1,0 +1,53 @@
+canvas 32x32
+pal bg=#0b1020 grid=#1a2740 ring=#3b5dc9 core=#ef7d57 ping=#ffcd75 signal=#a7f070
+
+# Variables + expressions
+let cx = 16
+let cy = 16
+let arm = 6
+let ringCount = 4
+let ringStep = 3
+
+fill 0,0 bg
+
+# Anchor defined with expression coordinates
+anchor hub ($cx, $cy)
+
+# Expression coordinates on line endpoints
+line ($cx - $arm * 2, $cy) ($cx + $arm * 2, $cy) grid
+line ($cx, $cy - $arm * 2) ($cx, $cy + $arm * 2) grid
+
+# Core
+circ hub 2 core
+
+# Repeat count expression + loop index $i
+repeat ($ringCount + 0) {
+  let r = ($i + 1) * $ringStep
+
+  # Cardinal points
+  px ($cx + $r, $cy) ring
+  px ($cx - $r, $cy) ring
+  px ($cx, $cy + $r) ring
+  px ($cx, $cy - $r) ring
+
+  # Diagonal points
+  px ($cx + $r, $cy + $r) ping
+  px ($cx - $r, $cy + $r) ping
+  px ($cx + $r, $cy - $r) ping
+  px ($cx - $r, $cy - $r) ping
+}
+
+# Non-parenthesized expression coordinate also works
+px 1+2,2+1 signal
+
+# Repeat step expressions + scoped let inside repeat
+let sweepCount = 7
+repeat $sweepCount step (1+1)x-(1+0) {
+  let trailX = 2 + $i
+  let trailY = 27 - $i
+  px ($trailX, $trailY) signal
+  px ($trailX + 1, $trailY) signal
+}
+
+# Expression size on square shorthand
+rect ($cx - 2, $cy + 11) (1 + 1) grid

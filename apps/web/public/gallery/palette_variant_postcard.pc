@@ -1,0 +1,89 @@
+## Palette Variant Postcard
+## One coastal cabin composition explored across dawn, daylight, and ember dusk palettes
+## Showcases: shared composition thinking, panel presentation, palette-driven art direction iteration
+version 0.1
+canvas 92x34
+
+pal :dawnbringer16
+pal+ frame=#101722 mat=#17233b line=#31476e foam=#dcecff windowCore=#fff2bf
+
+pal+ dawnSkyTop=#182544 dawnSkyMid=#35598f dawnGlow=#f4b374 dawnSea=#2c4b72 dawnSeaHi=#79abd9 dawnRock=#31415a dawnRockHi=#50617e dawnCabin=#d6c3a0 dawnRoof=#86534d dawnRoofHi=#bf7d63 dawnGrass=#6f8f4a dawnLight=#ffcf7a
+pal+ daySkyTop=#6ab5ff daySkyMid=#9ad8ff dayGlow=#f7edc0 daySea=#2d83ba daySeaHi=#b5e6ff dayRock=#586b74 dayRockHi=#7f97a1 dayCabin=#e9d8b8 dayRoof=#a25d44 dayRoofHi=#d68f66 dayGrass=#7cad58 dayLight=#ffe7a8
+pal+ duskSkyTop=#1b1736 duskSkyMid=#4a2d5f duskGlow=#f29d67 duskSea=#3e3569 duskSeaHi=#a18edb duskRock=#3e3550 duskRockHi=#635a79 duskCabin=#ceb494 duskRoof=#7b4343 duskRoofHi=#c26b58 duskGrass=#7d6d42 duskLight=#ffc97b
+
+const top = 4
+const leftA = 4
+const leftB = 34
+const leftC = 64
+
+group "postcard_frame" pivot 0,0 {
+  rect 0,0 24x26 mat
+  orect 0,0 24x26 line
+  rect 2,2 20x22 frame
+}
+
+layer "frames"
+fill 0,0 frame
+stamp "postcard_frame" at ($leftA, $top) :pivot
+stamp "postcard_frame" at ($leftB, $top) :pivot
+stamp "postcard_frame" at ($leftC, $top) :pivot
+
+layer "dawn"
+rect ($leftA + 2, $top + 2) 20x7 dawnSkyTop
+rect ($leftA + 2, $top + 9) 20x5 dawnSkyMid
+rect ($leftA + 2, $top + 14) 20x2 dawnGlow
+rect ($leftA + 2, $top + 16) 20x8 dawnSea
+poly ($leftA + 2, 23) ($leftA + 8, 17) ($leftA + 12, 18) ($leftA + 16, 15) ($leftA + 21, 18) ($leftA + 21, 26) ($leftA + 2, 26) dawnRock
+poly ($leftA + 2, 25) ($leftA + 7, 20) ($leftA + 11, 21) ($leftA + 15, 18) ($leftA + 21, 20) ($leftA + 21, 26) ($leftA + 2, 26) dawnRockHi
+line ($leftA + 2, 20) ($leftA + 21, 20) foam
+rect ($leftA + 14, 15) 4x5 dawnCabin
+rect ($leftA + 14, 14) 4x1 dawnRoofHi
+poly ($leftA + 13, 15) ($leftA + 16, 12) ($leftA + 19, 15) dawnRoof
+rect ($leftA + 15, 18) 1x2 dawnLight
+px ($leftA + 17, 17) dawnLight
+px ($leftA + 15, 18) windowCore
+line ($leftA + 14, 20) ($leftA + 18, 20) dawnRock
+rect ($leftA + 6, 19) 4x2 dawnGrass
+line ($leftA + 4, 24) ($leftA + 9, 23) dawnSeaHi
+line ($leftA + 11, 25) ($leftA + 18, 24) dawnSeaHi
+glow ($leftA + 15, 18) 3 #ffcf7a18
+
+layer "day"
+rect ($leftB + 2, $top + 2) 20x7 daySkyTop
+rect ($leftB + 2, $top + 9) 20x5 daySkyMid
+rect ($leftB + 2, $top + 14) 20x2 dayGlow
+rect ($leftB + 2, $top + 16) 20x8 daySea
+poly ($leftB + 2, 23) ($leftB + 8, 17) ($leftB + 12, 18) ($leftB + 16, 15) ($leftB + 21, 18) ($leftB + 21, 26) ($leftB + 2, 26) dayRock
+poly ($leftB + 2, 25) ($leftB + 7, 20) ($leftB + 11, 21) ($leftB + 15, 18) ($leftB + 21, 20) ($leftB + 21, 26) ($leftB + 2, 26) dayRockHi
+line ($leftB + 2, 20) ($leftB + 21, 20) foam
+rect ($leftB + 14, 15) 4x5 dayCabin
+rect ($leftB + 14, 14) 4x1 dayRoofHi
+poly ($leftB + 13, 15) ($leftB + 16, 12) ($leftB + 19, 15) dayRoof
+rect ($leftB + 15, 18) 1x2 dayLight
+px ($leftB + 17, 17) dayLight
+px ($leftB + 15, 18) windowCore
+line ($leftB + 14, 20) ($leftB + 18, 20) dayRock
+rect ($leftB + 6, 19) 4x2 dayGrass
+line ($leftB + 4, 24) ($leftB + 9, 23) daySeaHi
+line ($leftB + 11, 25) ($leftB + 18, 24) daySeaHi
+glow ($leftB + 15, 18) 3 #ffe7a818
+
+layer "dusk"
+rect ($leftC + 2, $top + 2) 20x7 duskSkyTop
+rect ($leftC + 2, $top + 9) 20x5 duskSkyMid
+rect ($leftC + 2, $top + 14) 20x2 duskGlow
+rect ($leftC + 2, $top + 16) 20x8 duskSea
+poly ($leftC + 2, 23) ($leftC + 8, 17) ($leftC + 12, 18) ($leftC + 16, 15) ($leftC + 21, 18) ($leftC + 21, 26) ($leftC + 2, 26) duskRock
+poly ($leftC + 2, 25) ($leftC + 7, 20) ($leftC + 11, 21) ($leftC + 15, 18) ($leftC + 21, 20) ($leftC + 21, 26) ($leftC + 2, 26) duskRockHi
+line ($leftC + 2, 20) ($leftC + 21, 20) foam
+rect ($leftC + 14, 15) 4x5 duskCabin
+rect ($leftC + 14, 14) 4x1 duskRoofHi
+poly ($leftC + 13, 15) ($leftC + 16, 12) ($leftC + 19, 15) duskRoof
+rect ($leftC + 15, 18) 1x2 duskLight
+px ($leftC + 17, 17) duskLight
+px ($leftC + 15, 18) windowCore
+line ($leftC + 14, 20) ($leftC + 18, 20) duskRock
+rect ($leftC + 6, 19) 4x2 duskGrass
+line ($leftC + 4, 24) ($leftC + 9, 23) duskSeaHi
+line ($leftC + 11, 25) ($leftC + 18, 24) duskSeaHi
+glow ($leftC + 15, 18) 3 #ffc97b18

@@ -1,0 +1,118 @@
+# Relic Orbit Spell Timeline v3
+# Showcase: timeline clauses + timeline vars + canvas built-ins.
+canvas 36x24
+
+pal night=#060914 star=#a9b7ff stone=#28344d stoneHi=#4a5e7f
+pal relicMetal=#d8e4ff relicCore=#8cf3ff relicHot=#ffffff
+pal arc=#294dff..#8be8ff steps 5
+pal smoke=#6f88b866 rune=#7acbff runeSoft=#7acbff33
+
+bitmap "star_dot" map S=star {
+  "S"
+}
+
+bitmap "rune_dot" map R=arc4 {
+  "R"
+}
+
+bitmap "smoke_dot" map M=smoke {
+  "M"
+}
+
+bitmap "wisp" map A=arc2 B=arc4 {
+  ".A."
+  "ABA"
+  ".A."
+}
+
+group "relic_core" {
+  orect 0,0 5x9 relicMetal
+  rect 1,1 3x7 #1c2a4a
+  rect 2,2 1x5 relicCore
+  px 2,1 relicHot
+  px 2,7 relicHot
+}
+
+layer "bg"
+fill 0,0 night
+scatter "star_dot" in 0,0 ($width)x9 count 28 seed 44
+
+layer "pedestal"
+rect ($centerX - 6, $height - 7) 12x5 stone
+orect ($centerX - 6, $height - 7) 12x5 stoneHi
+rect ($centerX - 4, $height - 9) 8x2 stoneHi
+glow ($centerX, $height - 10) 4 runeSoft
+ocirc ($centerX, $height - 10) 3 rune
+
+timeline 0..15 {
+  each {
+    let cx = $centerX
+    let baseY = $height - 14
+    let bob = (($frameNumber % 4) - 1)
+    let relicY = $baseY + $bob
+    let wing = 4 + (($frameNumber + 1) % 3)
+
+    push
+    layer "relic"
+    stamp "relic_core" at ($cx, $relicY) :center
+    glow ($cx, $relicY) (2 + ($t * 2)) arc3
+    pop
+
+    push
+    layer "glyphs"
+    mirror :x
+    line ($cx - $wing, $relicY) ($cx - 3, $relicY) arc2
+    px ($cx - $wing - 1, $relicY - 1) arc4
+    mirror off
+    pop
+
+    push
+    layer "fx"
+    emit "rune_dot" at ($cx, $relicY) count 14 spread 10x6 time $frame vel 0x-1 jitter 2x1 life 8 fade seed (500 + $frame)
+    emit "smoke_dot" at ($cx, $height - 10) count 6 spread 8x3 time $frame vel 0x-1 jitter 1x1 life 6 fade seed (700 + $frame)
+    pop
+  }
+
+  range 0..7 {
+    let cx = $centerX
+    let riseY = lerp(($height - 12), ($height - 16), $localT)
+
+    push
+    layer "relic"
+    stamp "wisp" at ($cx - 5, $riseY) :center
+    stamp "wisp" at ($cx + 5, $riseY) :center :flipx
+    pop
+
+    push
+    layer "fx"
+    emit "wisp" at ($cx, $riseY) count 3 spread 10x4 drift 1x0 time $localFrame jitter 1x1 life 5 fade seed (900 + $frameNumber)
+    pop
+  }
+
+  range 8..15 {
+    let cx = $centerX
+    let fallY = lerp(($height - 16), ($height - 12), $localT)
+
+    push
+    layer "relic"
+    stamp "wisp" at ($cx - 6, $fallY) :center :rot90
+    stamp "wisp" at ($cx + 6, $fallY) :center :rot270
+    pop
+
+    push
+    layer "fx"
+    emit "wisp" at ($cx, $fallY) count 3 spread 10x4 drift -1x0 time $localFrame jitter 1x1 life 5 fade seed (1100 + $frameNumber)
+    pop
+  }
+
+  at 0,4,8,12 {
+    let cx = $centerX
+    let pulseY = $height - 14
+
+    push
+    layer "pulse"
+    glow ($cx, $pulseY) (4 - $localFrame) #bfeeff55
+    ocirc ($cx, $pulseY) (3 + $localFrame) arc4
+    pop
+  }
+}

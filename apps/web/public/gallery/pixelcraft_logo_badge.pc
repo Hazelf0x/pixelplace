@@ -1,0 +1,80 @@
+# PixelCraft logo concept: layered badge with a bitmap-stamped P
+canvas 64x64
+
+pal bg0=#07111f bg1=#0d1b33 bg2=#13284a bg3=#1a3963
+pal grid=#1e446f
+pal ringOuter=#1c3354 ringInner=#24456f ringLight=#5ba0e8
+pal shadow=#00000066
+pal pDark=#5b1849 pMid=#a12d75 pLight=#ff72bc pEdge=#ffd3ef
+pal flare=#8fe8ff flareCore=#ffffff core=#ffe680
+
+let cx = 32
+let cy = 32
+
+bitmap "grid_cross" map g=grid {
+  ".g."
+  "ggg"
+  ".g."
+}
+
+bitmap "glyph_p" map d=pDark m=pMid l=pLight e=pEdge h=transparent {
+  "..eeeee...."
+  ".elmmmle..."
+  ".edhhhmel.."
+  ".edhhhmel.."
+  ".edmmmme..."
+  ".edllll...."
+  ".edddd....."
+  ".edddd....."
+  ".edddd....."
+  ".edddd....."
+  ".edddd....."
+  "..llll....."
+}
+
+bitmap "spark" map f=flare h=flareCore {
+  ".h."
+  "hfh"
+  ".h."
+}
+
+layer "bg"
+fill 0,0 bg0
+rect 0,0 64x20 bg1
+rect 0,20 64x20 bg2
+rect 0,40 64x24 bg3
+
+layer "pattern"
+tile "grid_cross" at 2,2 60x60 step 8x8
+
+layer "badge"
+poly ($cx,$cy-22) ($cx+22,$cy) ($cx,$cy+22) ($cx-22,$cy) ringOuter
+circ center 20 ringInner
+ocirc center 22 ringLight
+ocirc center 20 ringLight
+
+layer "frame"
+push
+mirror :x
+line ($cx-22,$cy-9) ($cx-28,$cy-9) ringLight
+line ($cx-22,$cy+9) ($cx-28,$cy+9) ringLight
+rect ($cx-27,$cy-8) 2x16 ringOuter
+pop
+
+layer "logo-shadow"
+stamp "glyph_p" at ($cx,$cy+1) :center opacity 0.28
+
+layer "logo-main"
+stamp "glyph_p" at center :center
+
+layer "logo-light"
+line ($cx-4,$cy-6) ($cx+1,$cy-6) pEdge
+line ($cx-4,$cy-2) ($cx,$cy-2) pEdge
+px ($cx-4,$cy+2) ($cx-4,$cy+6) pEdge
+glow center 5 core
+
+layer "flares"
+stamp "spark" at ($cx-16,$cy-14) :center
+stamp "spark" at ($cx+17,$cy-13) :center :rot90
+stamp "spark" at ($cx-15,$cy+15) :center :rot180
+stamp "spark" at ($cx+14,$cy+16) :center :rot270

@@ -1,0 +1,21 @@
+# Layer + push/pop demo
+canvas 16x10
+pal sky=#6eb5ff mountain=#4a5f7a cloud=#ffffff fog=#ffffff66
+
+fill 0,0 sky
+
+push
+layer "mountains"
+rect 0,5 16x5 mountain
+pop
+
+# Use temporary state for mirrored clouds.
+push
+layer "clouds"
+mirror :x
+rect 2,2 4x1 cloud
+rect 4,3 3x1 cloud
+pop
+
+layer "fog"
+rect 0,7 16x2 fog

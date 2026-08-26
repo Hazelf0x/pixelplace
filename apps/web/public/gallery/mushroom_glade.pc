@@ -1,0 +1,311 @@
+# Enchanted Mushroom Glade
+# A bioluminescent forest clearing at twilight
+canvas 48x48
+
+# === PALETTE ===
+# Low indices for bitmaps (0-9, a-f)
+pal bark=#1a120a cap_d=#0b5858 cap=#18a898 cap_l=#38ddcc glow=#80ffee white=#e8e8e8 dot=#0c4040 wcap_d=#703818 wcap=#d87028 wcap_l=#ffa848
+
+# a=10 b=11 c=12 d=13 e=14 f=15
+pal spore=#88eedd root=#2a1a0e moss_bm=#1e3e18 canopy_bm=#081008 fern=#2e5e24 fern_l=#409930
+
+# Sky gradient (twilight purple)
+pal dusk=#060412..#1a1248 steps 5
+
+# Scene colors
+pal moon=#fff4d0 moonglow=#ddbb8050
+pal trunk=#0e0a05 canopy=#0a140a canopy_dk=#050a05
+pal floor=#0e140a floor_dk=#0a1008 moss=#1c3016 moss_lt=#2a4a22
+pal glow_aura=#40eedd60 warm_aura=#ee884450
+pal mist=#2a6a6830
+
+# === POSITIONS ===
+let ground = 36
+let canopy_top = 10
+anchor moon_pos 38,6
+
+# === BITMAPS ===
+bitmap "bigcap" {
+  "...1221..."
+  "..123321.."
+  ".12366321."
+  "1236663211"
+  "1233333211"
+  ".11111111."
+}
+
+bitmap "tallstem" {
+  ".00."
+  ".b0."
+  ".00."
+  ".0b."
+  ".00."
+  "b00b"
+}
+
+bitmap "medcap" {
+  ".1221."
+  "123321"
+  "133331"
+  ".1111."
+}
+
+bitmap "shortstem" {
+  ".0."
+  ".0."
+  "b0b"
+}
+
+bitmap "tinymush" {
+  "12"
+  "21"
+  "00"
+}
+
+bitmap "warmcap" {
+  "..7887.."
+  ".788887."
+  "78899887"
+  ".777777."
+}
+
+bitmap "warmstem" {
+  ".b."
+  ".0."
+  "b0b"
+}
+
+bitmap "warmtiny" {
+  "78"
+  "87"
+  "0b"
+}
+
+bitmap "spore" {
+  ".a."
+  "a.a"
+  ".a."
+}
+
+bitmap "spore_dot" { "a" }
+
+bitmap "star" {
+  ".5."
+  "555"
+  ".5."
+}
+
+bitmap "treetrunk" {
+  "dd.dd"
+  ".ddd."
+  ".ddd."
+  ".ddd."
+  "ddddd"
+  "ddddd"
+  ".ddd."
+  ".ddd."
+}
+
+bitmap "canopyblob" {
+  "..dddd.."
+  ".dddddd."
+  "dddddddd"
+  "dddddddd"
+  ".dddddd."
+  "..dddd.."
+}
+
+bitmap "fern" {
+  "..e.."
+  ".eee."
+  "e.e.e"
+  "..e.."
+}
+
+bitmap "moss_clump" {
+  ".cc."
+  "cccc"
+}
+
+# === GROUPS ===
+group "big_mushroom" {
+  stamp "tallstem" at 3,6
+  stamp "bigcap" at 0,0
+  # highlight spots on cap
+  px 4,2 6,1 glow
+  # glow under cap
+  circ 5,7 5 glow_aura
+  circ 5,6 3 glow_aura
+}
+
+group "med_mushroom" {
+  stamp "shortstem" at 1,4
+  stamp "medcap" at 0,0
+  px 2,1 glow
+  circ 3,5 3 glow_aura
+  circ 3,4 2 glow_aura
+}
+
+group "warm_mushroom" {
+  stamp "warmstem" at 2,4
+  stamp "warmcap" at 0,0
+  px 3,1 4,2 wcap_l
+  circ 4,5 4 warm_aura
+  circ 4,4 2 warm_aura
+}
+
+group "canopy_tree" {
+  stamp "treetrunk" at 0,6
+  stamp "canopyblob" at -2,0
+  stamp "canopyblob" at 2,-2
+}
+
+# === SKY LAYER ===
+layer "sky"
+rect 0,0 48x10 dusk0
+rect 0,10 48x10 dusk1
+rect 0,20 48x10 dusk2
+rect 0,30 48x10 dusk3
+rect 0,40 48x8 dusk4
+
+# Moon glow and crescent
+circ moon_pos 4 moonglow
+circ moon_pos 2 moon
+circ 39,5 2 dusk1
+
+# Stars through canopy gaps
+scatter "star" in 12,2 24x8 count 6 seed 42
+scatter "spore_dot" in 2,0 44x10 count 12 seed 77
+
+# === CANOPY LAYER ===
+layer "canopy"
+
+# Thick canopy around edges, opening in center
+# Left canopy wall
+stamp "canopy_tree" at -2,2
+stamp "canopy_tree" at 3,0
+stamp "canopy_tree" at 0,8
+stamp "canopyblob" at 6,4
+stamp "canopyblob" at 1,12
+
+# Right canopy wall
+stamp "canopy_tree" at 40,1
+stamp "canopy_tree" at 44,4
+stamp "canopy_tree" at 42,10
+stamp "canopyblob" at 37,3
+stamp "canopyblob" at 44,12
+
+# Top canopy edge
+stamp "canopyblob" at 10,0
+stamp "canopyblob" at 20,-2
+stamp "canopyblob" at 30,0
+
+# Hanging branches into the glade
+rect 8,$canopy_top 2x4 trunk
+rect 38,$canopy_top 2x3 trunk
+px 7,($canopy_top+3) 10,($canopy_top+2) canopy
+px 37,($canopy_top+2) 40,($canopy_top+1) canopy
+
+# === GROUND LAYER ===
+layer "ground"
+rect 0,$ground 48x12 floor
+rect 0,($ground-2) 48x2 floor_dk
+
+# Mossy texture
+scatter "moss_clump" in 0,$ground 48x10 count 18 seed 101
+
+# Path clearing in center
+rect 16,($ground+1) 16x2 floor_dk
+px 18,($ground+2) 24,($ground+3) 30,($ground+2) floor_dk
+
+# === BACK MUSHROOMS ===
+layer "back_shrooms"
+
+# Distant small cyan mushrooms
+stamp "tinymush" at 10,($ground-4)
+stamp "tinymush" at 14,($ground-3) :flipx
+stamp "tinymush" at 34,($ground-3)
+stamp "tinymush" at 40,($ground-4) :flipx
+stamp "tinymush" at 44,($ground-2)
+
+# Dim glow behind
+circ 11,($ground-3) 2 glow_aura
+circ 35,($ground-2) 2 glow_aura
+
+# === MAIN MUSHROOMS ===
+layer "mushrooms"
+
+# Central big cyan mushroom
+stamp "big_mushroom" at 18,20
+
+# Medium mushrooms flanking
+stamp "med_mushroom" at 10,24
+stamp "med_mushroom" at 32,26
+
+# Warm mushroom cluster (right side)
+stamp "warm_mushroom" at 36,22
+stamp "warmtiny" at 42,28
+stamp "warmtiny" at 34,29 :flipx
+
+# Small cyan cluster (left side)
+stamp "tinymush" at 6,28
+stamp "tinymush" at 8,30
+stamp "tinymush" at 4,31 :flipx
+
+# Rotated tiny mushrooms for variety
+stamp "tinymush" at 28,30
+stamp "tinymush" at 30,28 :rot90
+
+# More small mushrooms filling the space
+stamp "tinymush" at 16,30
+stamp "tinymush" at 26,32 :flipx
+stamp "tinymush" at 38,31
+
+# Glow pools on the ground
+circ 23,27 6 glow_aura
+circ 13,27 4 glow_aura
+circ 38,26 5 warm_aura
+circ 7,30 2 glow_aura
+
+# === FOREGROUND DETAILS ===
+layer "foreground"
+
+# Ferns and ground cover
+stamp "fern" at 2,($ground-1)
+stamp "fern" at 12,($ground+1) :flipx
+stamp "fern" at 30,$ground
+stamp "fern" at 42,($ground-1) :flipx
+
+# Foreground mushrooms (slightly larger, closer)
+stamp "medcap" at 0,($ground-2)
+stamp "shortstem" at 1,$ground
+
+stamp "warmtiny" at 44,($ground+2)
+stamp "warmtiny" at 46,($ground+1) :flipx
+
+# Moss on ground edges
+push
+color moss_lt
+px 3,$ground 8,$ground 16,$ground 20,$ground
+px 28,$ground 33,$ground 38,$ground 43,$ground
+pop
+
+# === FLOATING SPORES ===
+layer "spores"
+
+# Scattered luminescent spores drifting upward
+scatter "spore" in 8,14 32x22 count 18 seed 333
+scatter "spore_dot" in 4,10 40x28 count 35 seed 555
+scatter "spore_dot" in 10,16 28x14 count 20 seed 888
+
+# Extra bright spores near mushroom caps
+px 20,18 22,17 25,19 glow
+px 19,16 24,15 glow
+px 38,20 40,21 37,19 glow
+px 12,22 14,23 11,21 glow
+px 33,25 35,24 cap_l
+
+# === MIST LAYER ===
+layer "mist"
+rect 0,($ground-4) 48x6 mist
+rect 6,($ground-6) 36x4 mist

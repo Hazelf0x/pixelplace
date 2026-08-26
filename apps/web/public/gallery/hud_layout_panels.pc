@@ -1,0 +1,136 @@
+## HUD Layout Panels
+## A cleaner HUD composition built almost entirely from named box regions and box-point placement
+## Showcases: nested layout boxes, box-backed defpt markers, and calmer spatial authoring for UI packs
+version 0.1
+canvas 72x42
+
+pal :dawnbringer16
+pal+ bg=#08101b panel=#12203a panelDeep=#0c1629 frame=#30507d frameHi=#79a7d8
+pal+ red=#c6495f redHi=#ff9eb0 blue=#4b86d8 blueHi=#addbff green=#4f9e76 greenHi=#b8f2d1
+pal+ gold=#d1ab64 goldHi=#ffe7ab glass=#79c3e8 glassHi=#d9f5ff ink=#04070d shade=#00000044
+
+group "panel_shell" pivot 0,0 {
+  rect 0,0 72x42 bg
+  rect 2,2 68x38 panel
+  orect 2,2 68x38 frameHi
+  rect 4,4 64x34 panelDeep
+}
+
+group "slot_frame" pivot 0,0 {
+  rect -5,-5 10x10 #101a2e
+  orect -5,-5 10x10 frameHi
+  rect -3,-3 6x6 panel
+}
+
+group "heart_icon" pivot 0,0 {
+  circ -1,-1 1 red
+  circ 1,-1 1 red
+  poly -2,0 0,3 2,0 0,1 red
+  px 0,0 redHi
+}
+
+group "drop_icon" pivot 0,0 {
+  poly 0,-3 2,0 0,3 -2,0 blue
+  line 0,-2 0,2 blueHi
+  px -1,0 1,0 blueHi
+}
+
+group "leaf_badge" pivot 0,0 {
+  poly 0,-3 2,-1 1,2 -1,2 -2,-1 green
+  line 0,-2 0,2 greenHi
+  px -1,0 1,0 greenHi
+}
+
+group "compass" pivot 0,0 {
+  circ 0,0 5 frameHi
+  circ 0,0 4 panel
+  line 0,-4 0,4 goldHi
+  line -4,0 4,0 goldHi
+  poly 0,-5 1,-1 0,0 -1,-1 red
+  poly 0,5 1,1 0,0 -1,1 blueHi
+}
+
+group "quest_mark" pivot 0,0 {
+  poly 0,-3 3,0 0,3 -3,0 gold
+  px 0,-2 0,2 goldHi
+  px -2,0 2,0 goldHi
+}
+
+box hud 2,2 68x38
+box vitals in hud dock topLeft 27x12 offset +3,+4
+box mana in hud dock topLeft 27x8 offset +3,+19
+box radar in hud dock topRight 20x14 offset -3,+4
+box quickbar in hud dock bottomRight 34x4 offset -3,-3
+box quest in hud dock bottomLeft 17x6 offset +4,-3
+
+box healthBar in vitals dock topLeft 15x3 offset +8,+2
+box staminaBar in vitals dock topLeft 15x2 offset +8,+7
+box manaBar in mana dock topLeft 15x3 offset +8,+2
+
+box slot1 box quickbar topLeft +0,-9 10x10
+box slot2 box slot1 topRight +2,+0 10x10
+box slot3 box slot2 topRight +2,+0 10x10
+
+defpt radarCore = box radar center
+defpt alertPing = box radar topRight -3,+3
+defpt questBadge = box quest center
+
+layer "base"
+stamp "panel_shell" at 0,0 :pivot
+
+rect box vitals topLeft 27x12 panel
+orect box vitals topLeft 27x12 frameHi
+rect box mana topLeft 27x8 panel
+orect box mana topLeft 27x8 frameHi
+rect box radar topLeft 20x14 panel
+orect box radar topLeft 20x14 frameHi
+rect box quickbar topLeft 34x4 panel
+orect box quickbar topLeft 34x4 frameHi
+rect box quest topLeft 17x6 panel
+orect box quest topLeft 17x6 frameHi
+
+# Decorative divider strokes inside the panels.
+line box vitals bottomLeft box vitals bottomRight frame
+line box mana bottomLeft box mana bottomRight frame
+line box radar bottomLeft box radar bottomRight frame
+line box quickbar topLeft +2,+1 box quickbar topRight -2,+1 frame
+
+layer "widgets"
+stamp "heart_icon" at box vitals topLeft +3,+3 :pivot
+rect box healthBar topLeft 15x3 frame
+rect box healthBar topLeft 12x3 red
+rect box healthBar topLeft 10x1 redHi
+
+stamp "leaf_badge" at box vitals bottomLeft +3,-3 :pivot
+rect box staminaBar topLeft 15x2 frame
+rect box staminaBar topLeft 9x2 green
+rect box staminaBar topLeft 7x1 greenHi
+
+stamp "drop_icon" at box mana topLeft +3,+3 :pivot
+rect box manaBar topLeft 15x3 frame
+rect box manaBar topLeft 11x3 blue
+rect box manaBar topLeft 9x1 blueHi
+
+stamp "compass" at radarCore :pivot
+line box radar left +3,+0 box radar right -3,+0 frame
+line box radar top +0,+3 box radar bottom +0,-3 frame
+stamp "quest_mark" at alertPing :pivot
+glow radarCore 5 #addbff14
+
+stamp "slot_frame" at box slot1 center :pivot
+stamp "slot_frame" at box slot2 center :pivot
+stamp "slot_frame" at box slot3 center :pivot
+stamp "heart_icon" at box slot1 center :pivot
+stamp "drop_icon" at box slot2 center :pivot
+stamp "leaf_badge" at box slot3 center :pivot
+
+stamp "quest_mark" at questBadge :pivot
+rect box quest topLeft +10,+2 4x1 gold
+rect box quest topLeft +10,+3 3x1 goldHi
+
+layer "trim"
+px box vitals topLeft +2,+1 gold
+px box mana topLeft +2,+1 gold
+px box radar topLeft +2,+1 gold
+px box quickbar topLeft +2,+1 gold
+px box quest topLeft +2,+1 gold

@@ -1,0 +1,132 @@
+## HUD Mini-Pack
+## A cohesive fantasy HUD sheet with bars, pips, slots, a compass, and alert markers
+## Showcases: semantic pivots for compact assets, repeated UI motifs, and game-ready interface styling
+version 0.1
+canvas 64x40
+
+pal :dawnbringer16
+pal+ bg=#09111d bg2=#101c31 chrome=#1f3153 chromeHi=#5678a6 chromeLow=#0d1730
+pal+ gold=#cba45f goldHi=#f6dda1 red=#c74e5a redHi=#ff98a1 blue=#4f86d9 blueHi=#a8d8ff
+pal+ green=#4f9d74 greenHi=#b6f2cc ink=#05080f slot=#111a2d slotHi=#334970 glowRed=#ff6f7a22 glowBlue=#74b8ff22
+
+anchor healthIcon 8,13
+anchor manaIcon 8,26
+anchor compassCore 49,14
+anchor alertPos 55,10
+anchor slotA 43,28
+anchor slotB 49,28
+anchor slotC 55,28
+
+bitmap "spark" map S=goldHi {
+  ".S."
+  "SSS"
+  ".S."
+}
+
+group "panel_frame" pivot 0,0 {
+  rect 0,0 64x40 bg
+  rect 2,2 60x36 bg2
+  orect 2,2 60x36 chromeHi
+  line 4,6 59,6 chromeLow
+  line 4,33 59,33 chromeLow
+}
+
+group "radar_frame" pivot 0,0 {
+  rect 39,8 20x12 slot
+  orect 39,8 20x12 chromeHi
+  rect 41,10 16x8 bg2
+}
+
+group "inventory_slot" pivot 0,0 {
+  rect -5,-5 10x10 slot
+  orect -5,-5 10x10 slotHi
+  rect -3,-3 6x6 chromeLow
+}
+
+group "quest_badge" pivot 0,0 {
+  poly 0,-4 4,0 0,4 -4,0 gold
+  line 0,-3 0,3 goldHi
+  line -2,0 2,0 goldHi
+  stamp "spark" at 0,0 :center
+}
+
+group "alert_marker" pivot 0,0 {
+  poly 0,-3 3,3 -3,3 red
+  px 0,-1 0,0 ink
+  px 0,2 redHi
+}
+
+group "compass" pivot 0,0 {
+  circ 0,0 5 chromeHi
+  circ 0,0 4 bg2
+  line 0,-4 0,4 goldHi
+  line -4,0 4,0 goldHi
+  poly 0,-5 1,-1 0,0 -1,-1 red
+  poly 0,5 1,1 0,0 -1,1 blueHi
+}
+
+group "heart_icon" pivot 0,0 {
+  circ -1,-1 1 red
+  circ 1,-1 1 red
+  poly -2,0 0,3 2,0 0,1 red
+  px 0,0 redHi
+}
+
+group "drop_icon" pivot 0,0 {
+  poly 0,-3 2,0 0,3 -2,0 blue
+  line 0,-2 0,2 blueHi
+  px -1,0 1,0 blueHi
+}
+
+layer "base"
+stamp "panel_frame" at 0,0 :pivot
+rect 4,8 29x10 chromeLow
+orect 4,8 29x10 chromeHi
+rect 4,21 29x10 chromeLow
+orect 4,21 29x10 chromeHi
+stamp "radar_frame" at 0,0 :pivot
+rect 38,24 22x8 chromeLow
+orect 38,24 22x8 chromeHi
+
+layer "bars"
+stamp "heart_icon" at healthIcon :pivot
+rect 12,10 16x2 chrome
+rect 12,12 16x3 red
+rect 12,15 14x1 redHi
+glow 18,13 5 glowRed
+
+stamp "drop_icon" at manaIcon :pivot
+rect 12,23 16x2 chrome
+rect 12,25 12x3 blue
+rect 12,28 10x1 blueHi
+glow 17,26 5 glowBlue
+
+repeat 5 {
+  let x = 14 + ($i * 3)
+  px ($x, 19) gold
+  px ($x + 1, 19) goldHi
+  px ($x, 32) green
+  px ($x + 1, 32) greenHi
+}
+
+layer "minimap"
+stamp "compass" at compassCore :pivot
+line 43,14 55,14 chromeLow
+line 49,9 49,19 chromeLow
+stamp "alert_marker" at alertPos :pivot
+
+layer "inventory"
+stamp "inventory_slot" at slotA :pivot
+stamp "inventory_slot" at slotB :pivot
+stamp "inventory_slot" at slotC :pivot
+stamp "quest_badge" at slotA :pivot
+stamp "heart_icon" at slotB :pivot
+stamp "drop_icon" at slotC :pivot
+rect 52,23 6x1 gold
+rect 52,24 4x1 goldHi
+
+layer "trim"
+line 34,8 34,31 chromeLow
+line 36,20 59,20 chromeLow
+px 6,5 57,5 6,34 57,34 gold
+px 7,5 56,5 7,34 56,34 goldHi
