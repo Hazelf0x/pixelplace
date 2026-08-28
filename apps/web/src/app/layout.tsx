@@ -2,6 +2,17 @@ import './globals.css'
 import './studio.css'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Silkscreen } from 'next/font/google'
+
+// A bitmap face for headings and labels. next/font downloads it at build time and
+// self-hosts it, so the deployed site never calls out to Google. Body copy stays a
+// normal sans — a pixel face is a voice, not a substitute for readability.
+const pixel = Silkscreen({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--pixel',
+  display: 'swap'
+})
 
 export const metadata: Metadata = {
   title: 'PixelPlace',
@@ -30,7 +41,7 @@ function BrandMark() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={pixel.variable}>
       <body>
         <header className="topbar">
           <Link href="/" className="brand">

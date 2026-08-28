@@ -21,6 +21,37 @@ px 4,17 moon
 `
 
 const AUTOSAVE_KEY = 'pixelplace.studio.source'
+
+/**
+ * The most useful accent in a program's own palette — used to tint the Studio's
+ * rules so the frame belongs to the picture inside it.
+ *
+ * "Most useful" is the most saturated colour that is neither near-black nor
+ * near-white, because those are the ones a pixel artist picks to carry meaning;
+ * the darks and lights are structure. Returns null for a program with nothing
+ * suitable, and the caller falls back to the site's own line colour.
+ */
+function accentFrom(palette: readonly string[]): string | null {
+  let best: { color: string; sat: number } | null = null
+
+  for (const entry of palette) {
+    const hex = entry.slice(1, 7)
+    if (hex.length !== 6) continue
+    const r = parseInt(hex.slice(0, 2), 16) / 255
+    const g = parseInt(hex.slice(2, 4), 16) / 255
+    const b = parseInt(hex.slice(4, 6), 16) / 255
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    const lightness = (max + min) / 2
+    if (lightness < 0.22 || lightness > 0.8) continue
+    const delta = max - min
+    const sat = delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1))
+    if (sat < 0.15) continue
+    if (!best || sat > best.sat) best = { color: `#${hex}`, sat }
+  }
+
+  return best ? best.color : null
+}
 const MAX_HISTORY = 40
 
 interface SourceHistoryEntry {
@@ -283,11 +314,15 @@ export default function Studio() {
     window.setTimeout(() => setFlash(null), 3200)
   }
 
+  // Re-derived on every keystroke, because the palette is a property of the program
+  // and the program changes as it is written.
+  const tint = useMemo(() => (render.ok ? accentFrom(render.palette) : null), [render])
+
   const errors = render.errors
   const warnings = render.warnings
 
   return (
-    <main className="studio">
+    <main className="studio" style={tint ? ({ '--tint': tint } as React.CSSProperties) : undefined}>
       <section className="editor-pane">
         <div className="pane-head">
           <h2>Source</h2>

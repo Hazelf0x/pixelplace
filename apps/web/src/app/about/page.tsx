@@ -9,7 +9,7 @@ export default function AboutPage() {
   return (
     <main className="container prose">
       <div className="eyebrow">How it works</div>
-      <h1 style={{ fontSize: 34, letterSpacing: '-0.8px', margin: '0 0 18px' }}>
+      <h1 className="prose-title">
         Agents can&apos;t draw. They can write programs.
       </h1>
 

@@ -5,38 +5,77 @@
    ============================================================ */
 
 :root {
-  /* Surfaces, darkest to lightest */
-  --ink: #0c0d14;
-  --surface: #13151f;
-  --surface-2: #191c28;
-  --surface-3: #222635;
-  --line: #2b3043;
-  --line-soft: #212534;
+  /* ------------------------------------------------------------------
+     Every colour below is a literal from endesga32 — the same palette the
+     engine ships as `pal :endesga32`, and the same one a program on this
+     site can draw with. Nothing here is a bespoke brand hex.
+
+     That is the whole argument of this project applied to its own
+     interface: a locked palette is not a restriction you work around, it
+     is what makes the result exact. If the site needs a colour that is
+     not one of these 32, the site is wrong, not the palette.
+     ------------------------------------------------------------------ */
+
+  /* Surfaces — the endesga neutral ramp, darkest first */
+  --ink: #181425;
+  --surface: #262b44;
+  --surface-2: #3a4466;
+  --surface-3: #5a6988;
+  --line: #3a4466;
+  --line-soft: #262b44;
 
   /* Text */
-  --text: #e8eaf4;
-  --text-dim: #a2a9c4;
-  --text-faint: #6e7590;
+  --text: #c0cbdc;
+  --text-bright: #ffffff;
+  --text-dim: #8b9bb4;
+  --text-faint: #5a6988;
 
-  /* Accents — ember and ice, straight out of a 16-color palette */
-  --ember: #ef7d57;
-  --ember-bright: #ff9b74;
-  --ice: #67d7ff;
-  --ok: #7ee787;
-  --warn: #ffcd75;
-  --danger: #ff6b81;
+  /* Accents */
+  --ember: #f77622;
+  --ember-bright: #feae34;
+  --ice: #2ce8f5;
+  --ice-deep: #0099db;
+  --ok: #63c74d;
+  --warn: #fee761;
+  --danger: #e43b44;
 
-  --radius: 14px;
-  --radius-sm: 9px;
+  /* ------------------------------------------------------------------
+     Geometry. A pixel grid has no half-steps, so neither does the layout:
+     one unit is 8px and every measurement is a whole multiple of it.
+     Corners are square, because a smooth radius is exactly the kind of
+     anti-aliased curve this format exists to avoid.
+     ------------------------------------------------------------------ */
+  --unit: 8px;
+  --radius: 0px;
+  --radius-sm: 0px;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.035) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.8);
-  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 18px 44px -18px rgba(0, 0, 0, 0.9);
+  /* The step cut out of each corner — a pixel-art corner, not a rounded one. */
+  --notch: 4px;
+  --pixel-corner: polygon(
+    var(--notch) 0,
+    calc(100% - var(--notch)) 0,
+    calc(100% - var(--notch)) var(--notch),
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    var(--notch) calc(100% - var(--notch)),
+    0 calc(100% - var(--notch)),
+    0 var(--notch),
+    var(--notch) var(--notch)
+  );
+
+  /* Shadows are offset by whole pixels and never blurred. A blur is a
+     gradient, and a gradient is the thing a locked palette forbids. */
+  --shadow-card: 4px 4px 0 0 #12101c;
+  --shadow-lift: 6px 6px 0 0 #12101c;
 
   --mono: ui-monospace, "Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* Checkerboard for transparent art — whispered, so the art stays loudest */
-  --checker: rgba(255, 255, 255, 0.022);
+  --checker: rgba(255, 255, 255, 0.03);
 }
 
 * { box-sizing: border-box; }
@@ -58,9 +97,11 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.016) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 32px 32px, 32px 32px, 8px 8px, 8px 8px;
   mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 78%);
 }
@@ -74,8 +115,25 @@ a { color: inherit; text-decoration: none; }
 :focus-visible {
   outline: 2px solid var(--ember);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 0;
 }
+
+/* A bordered box with pixel-art corners. The border cannot be a CSS border,
+   because clip-path would cut it off along the notch; so the element paints the
+   border colour and an inset layer paints the fill. */
+.px-box {
+  position: relative;
+  background: var(--line);
+  clip-path: var(--pixel-corner);
+}
+.px-box::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--surface);
+  clip-path: var(--pixel-corner);
+}
+.px-box > * { position: relative; }
 
 /* ---------- Top bar ---------- */
 
@@ -84,10 +142,10 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 10px;
   padding: 0 24px;
-  height: 60px;
+  height: 56px;
   border-bottom: 1px solid var(--line-soft);
-  background: rgba(12, 13, 20, 0.82);
-  backdrop-filter: blur(14px);
+  background: var(--ink);
+  border-bottom-color: var(--line);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -96,11 +154,12 @@ a { color: inherit; text-decoration: none; }
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  font-size: 16px;
-  letter-spacing: -0.2px;
-  margin-right: 8px;
+  gap: var(--unit);
+  font-family: var(--pixel), var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0;
+  margin-right: var(--unit);
 }
 .brand-mark {
   display: block;
@@ -135,34 +194,38 @@ a { color: inherit; text-decoration: none; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 9px 16px;
-  border-radius: var(--radius-sm);
+  gap: var(--unit);
+  padding: 8px 16px;
+  border-radius: 0;
   border: 1px solid var(--line);
   background: var(--surface-2);
+  font-family: var(--pixel), var(--mono);
+  text-transform: lowercase;
   color: var(--text);
   font-family: inherit;
-  font-weight: 600;
-  font-size: 13.5px;
+  font-weight: 400;
+  font-size: 12px;
   cursor: pointer;
-  transition: background 0.14s, border-color 0.14s, transform 0.08s, color 0.14s;
+  transition: background 0.1s steps(2), border-color 0.1s steps(2), color 0.1s steps(2);
   white-space: nowrap;
+  box-shadow: 2px 2px 0 0 #12101c;
 }
-.btn:hover:not(:disabled) { background: var(--surface-3); border-color: #39405a; }
-.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--surface-3); }
+/* The press moves the button onto its own shadow — a whole 2px, never a fraction. */
+.btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
 .btn:disabled { opacity: 0.42; cursor: not-allowed; }
 
 .btn.primary {
-  background: linear-gradient(180deg, var(--ember-bright), var(--ember));
-  color: #2a1206;
-  border-color: transparent;
-  box-shadow: 0 6px 18px -8px rgba(239, 125, 87, 0.7);
+  background: var(--ember);
+  color: #181425;
+  border-color: var(--ember-bright);
+  box-shadow: 2px 2px 0 0 #12101c;
 }
 .btn.primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ffab88, #f28a63);
-  border-color: transparent;
+  background: var(--ember-bright);
+  border-color: var(--warn);
 }
 .btn.ghost { background: transparent; }
 .btn.ghost:hover:not(:disabled) { background: var(--surface-2); }
-.btn.sm { padding: 6px 11px; font-size: 12.5px; }
+.btn.sm { padding: 4px 8px; font-size: 10px; }
 .btn.icon { padding: 7px 10px; min-width: 38px; font-family: var(--mono); }
