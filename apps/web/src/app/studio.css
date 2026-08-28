@@ -228,21 +228,47 @@
 .history-controls { display: flex; align-items: center; gap: 5px; }
 .history-controls .btn { padding: 4px 8px; font-size: 11.5px; }
 
+/* Shared by BOTH editor layers. Every property that affects where a glyph lands
+   must live here and nowhere else, or the highlighted copy drifts out of register
+   with the text the caret is actually moving through. */
 .source {
   display: block;
-  background: var(--surface);
   width: 100%;
   min-height: 52vh;
-  resize: vertical;
-  background: transparent;
-  color: #d8dcf2;
+  margin: 0;
   border: 0;
   padding: 15px 17px;
   font-family: var(--mono);
   font-size: 13px;
   line-height: 1.62;
   tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background: transparent;
 }
+
+.source-stack { position: relative; background: var(--surface); }
+
+/* The colour. Inert: it never receives a click, and screen readers skip it,
+   because the textarea above is the real control. */
+.source-ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--text);
+}
+.source-ghost code { font: inherit; }
+
+/* The control. Its text is invisible; only the caret and selection show. */
+.source-input {
+  position: relative;
+  resize: vertical;
+  color: transparent;
+  caret-color: var(--ember);
+  background: transparent;
+}
+.source-input::selection { background: rgba(247, 118, 34, 0.3); color: transparent; }
 .source:focus { outline: none; }
 
 .diagnostics {
@@ -489,4 +515,106 @@
   .guide-callout, .recipe-grid { grid-template-columns: 1fr; }
   .recipe-card p { min-height: 0; }
   .reference-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* ---------- Living hero ----------
+   The front page's showpiece: a real program replaying one visible change at a
+   time, listing on the left, canvas on the right. Same construction as every other
+   panel here — rule colour behind 1px of padding, notched corners, whole-pixel
+   drop shadow — so it reads as part of the page rather than an embed. */
+
+.living { margin: 8px 0 40px; }
+.living-panes {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  background: var(--line);
+  padding: 1px;
+  gap: 1px;
+  clip-path: var(--pixel-corner);
+  filter: drop-shadow(4px 4px 0 #12101c);
+}
+
+.living-listing {
+  background: var(--ink);
+  height: 348px;
+  overflow: hidden;
+  padding: 14px 0;
+  /* Fade the first and last lines rather than slicing them, so the listing reads as
+     a window onto a longer program instead of a box that clipped one. */
+  mask-image: linear-gradient(#0000 0, #000 26px, #000 calc(100% - 26px), #0000 100%);
+  -webkit-mask-image: linear-gradient(#0000 0, #000 26px, #000 calc(100% - 26px), #0000 100%);
+}
+.living-listing pre { margin: 0; }
+.living-listing code { font-family: var(--mono); font-size: 11.5px; line-height: 1.55; }
+
+.living-line { display: flex; gap: 12px; padding: 0 14px; white-space: pre; }
+.living-line.is-ahead { opacity: 0.26; }
+.living-line.is-active { background: var(--surface); }
+.living-line.is-active .living-gutter { color: var(--ember); }
+.living-gutter {
+  flex: none;
+  width: 30px;
+  text-align: right;
+  color: var(--text-faint);
+  user-select: none;
+}
+.living-code { flex: 1; min-width: 0; }
+
+.living-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background:
+    conic-gradient(from 90deg at 50% 50%, var(--checker) 25%, transparent 0 50%, var(--checker) 0 75%, transparent 0)
+      0 0 / 16px 16px,
+    var(--ink);
+}
+/* flex:none and an integer height keep the art on whole pixels; a flex item that
+   is allowed to shrink is how fractional scaling creeps back in. */
+.living-art {
+  flex: none;
+  image-rendering: pixelated;
+  height: 280px;
+  width: auto;
+}
+
+.living-transport {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+.living-transport input[type='range'] { flex: 1; accent-color: var(--ember); }
+.living-count { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); flex: none; }
+
+.living-caption {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px;
+}
+.living-caption code { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); }
+.living-progress {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--ember);
+}
+.living-open { margin-left: auto; color: var(--ice); font-weight: 600; }
+.living-open:hover { color: var(--text-bright); }
+
+.hero-rest { padding-top: 0; }
+
+@media (max-width: 860px) {
+  .living-panes { grid-template-columns: minmax(0, 1fr); }
+  .living-listing { height: 220px; }
+  .living-art { height: 200px; }
 }

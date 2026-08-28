@@ -229,3 +229,23 @@ a { color: inherit; text-decoration: none; }
 .btn.ghost:hover:not(:disabled) { background: var(--surface-2); }
 .btn.sm { padding: 4px 8px; font-size: 10px; }
 .btn.icon { padding: 7px 10px; min-width: 38px; font-family: var(--mono); }
+
+/* ---------- Syntax highlighting ----------
+   Colours come from the same endesga32 set as the rest of the interface, so a
+   listing sits inside the page rather than on top of it. Assignments follow what
+   a reader scans for: commands first, then the values that vary. */
+
+.tok-keyword { color: var(--ember); }
+.tok-number  { color: var(--text); }
+.tok-var     { color: var(--ice); }
+.tok-string  { color: var(--ok); }
+.tok-name    { color: var(--warn); }
+.tok-symbol  { color: #b55088; }
+.tok-punct   { color: var(--text-dim); }
+.tok-comment { color: var(--text-faint); }
+
+/* .tok-color carries an inline colour: the literal is drawn in the colour it
+   names, lightened only as far as it takes to be readable on ink. */
+.tok-color { font-weight: 600; }
+
+.code-line { display: inline; }

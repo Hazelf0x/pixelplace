@@ -1,7 +1,22 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import Link from 'next/link'
 import { GALLERY, allTags, previewGif, previewPng } from '@/lib/gallery'
+import LivingHero from '@/components/LivingHero'
 
-export default function GalleryPage() {
+/** The piece the front page replays. Chosen for having a lot of visible construction. */
+const HERO_SLUG = 'fable_ink_sea_v2'
+
+export default async function GalleryPage() {
+  // Read at BUILD time. This route is statically prerendered, so the program is
+  // inlined into the HTML and no server ever runs to serve it. (/studio had to stop
+  // doing exactly this, but only because a query string made that route dynamic —
+  // a traced-away file at request time. There is no request time here.)
+  const heroSource = await readFile(
+    join(process.cwd(), 'public', 'gallery', `${HERO_SLUG}.pc`),
+    'utf8'
+  )
+  const heroEntry = GALLERY.find((entry) => entry.slug === HERO_SLUG)
   const animated = GALLERY.filter((entry) => entry.frameCount > 0).length
   const tags = allTags().slice(0, 9)
 
@@ -14,6 +29,13 @@ export default function GalleryPage() {
           <br />
           <em>It can write a program.</em>
         </h1>
+      </section>
+
+      {heroEntry && (
+        <LivingHero source={heroSource} title={heroEntry.title} slug={HERO_SLUG} />
+      )}
+
+      <section className="hero hero-rest">
         <p>
           An image model cannot hold a grid — wrong pixel sizes, anti-aliased edges, colors that
           drift off palette. A program can. Every piece here is PixelCraft source that compiles to

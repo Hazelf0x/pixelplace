@@ -23,6 +23,11 @@ import { buildAIPromptText } from './lang/docs-content'
 
 export { parse, compileProgram, formatSource, Interpreter, HeadlessPixelCanvas, canvasToRgba }
 export { encodeFramesToGif }
+// The compiler's own lexer, so anything that highlights PixelCraft on the site
+// tokenises it exactly the way the compiler does. A hand-written highlighter can
+// disagree with what actually compiles; this one structurally cannot.
+export { tokenize } from './lang/lexer'
+export type { Token, TokenType } from './lang/lexer'
 export type { CompileError, RuntimeError, ProgramWarning, GifEncodeOptions }
 export * from './lang/ast'
 
@@ -278,5 +283,130 @@ export function renderGif(
     frameCount: result.frames.length,
     width: result.width,
     height: result.height
+  }
+}
+
+
+/** Cap on replay steps, matching the Node entry. */
+export const MAX_REPLAY_STEPS = 300
+
+export interface BrowserReplayStep {
+  index: number
+  /** 1-based line in the source that produced this step. */
+  line: number
+  column: number
+  /** That line, trimmed — enough to caption the step without re-reading the source. */
+  text: string
+  /** The canvas as it stood after this statement ran. */
+  rgba: Uint8Array
+}
+
+export interface BrowserReplayResult {
+  ok: boolean
+  errors: Diagnostic[]
+  warnings: Diagnostic[]
+  width: number
+  height: number
+  sourceWidth: number
+  sourceHeight: number
+  palette: string[]
+  steps: BrowserReplayStep[]
+  /** True when the program had more visible steps than MAX_REPLAY_STEPS. */
+  truncated: boolean
+}
+
+const EMPTY_REPLAY: BrowserReplayResult = {
+  ok: false,
+  errors: [],
+  warnings: [],
+  width: 0,
+  height: 0,
+  sourceWidth: 0,
+  sourceHeight: 0,
+  palette: [],
+  steps: [],
+  truncated: false
+}
+
+/**
+ * Replay a program's construction, one visible change at a time.
+ *
+ * The browser twin of `renderReplay` in the Node entry, stopping at RGBA rather
+ * than encoding a PNG per step. Two things make this a single pass instead of
+ * re-executing the program N times: drawing accumulates in LAYERS and reaches the
+ * canvas only through `compositeLayersToCanvas`, so reading the canvas mid-run
+ * cannot affect what the program does.
+ *
+ * A statement earns a step only when the pixels actually change — compared here by
+ * bytes, exactly as the Node version compares encoded PNGs. Declarations therefore
+ * drop out on their own, and the rule stays correct as the language grows.
+ */
+export function renderReplayToRgba(
+  source: string,
+  opts: { frame?: number } = {}
+): BrowserReplayResult {
+  const compiled = compile(source)
+  if (compiled.errors.length > 0) {
+    return { ...EMPTY_REPLAY, errors: compiled.errors.map(toDiagnostic) }
+  }
+
+  const canvas = new HeadlessPixelCanvas()
+  const interpreter = new Interpreter(canvas as unknown as never)
+  const warnings = interpreter.analyzeWarnings(compiled.program).map(toDiagnostic)
+  const analysis = interpreter.analyzeProgram(compiled.program)
+
+  const sourceLines = source.split(/\r?\n/)
+  const steps: BrowserReplayStep[] = []
+  let previous: Uint8Array | null = null
+  let truncated = false
+
+  interpreter.setStepObserver((node) => {
+    if (steps.length >= MAX_REPLAY_STEPS) {
+      truncated = true
+      return
+    }
+
+    const rgba = canvasToRgba(canvas, 1)
+    if (previous && rgba.length === previous.length) {
+      let same = true
+      for (let i = 0; i < rgba.length; i++) {
+        if (rgba[i] !== previous[i]) {
+          same = false
+          break
+        }
+      }
+      if (same) return
+    }
+    previous = rgba
+
+    steps.push({
+      index: steps.length,
+      line: node.pos.line,
+      column: node.pos.column,
+      text: (sourceLines[node.pos.line - 1] ?? '').trim(),
+      rgba
+    })
+  })
+
+  const frameIndex = analysis.hasAnimation
+    ? Math.min(Math.max(0, opts.frame ?? 0), Math.max(0, analysis.frameCount - 1))
+    : undefined
+
+  const runtimeErrors = interpreter.execute(compiled.program, frameIndex)
+  interpreter.setStepObserver(null)
+
+  const size = canvas.getSize()
+
+  return {
+    ok: runtimeErrors.length === 0,
+    errors: runtimeErrors.map(toDiagnostic),
+    warnings,
+    width: size.width,
+    height: size.height,
+    sourceWidth: size.width,
+    sourceHeight: size.height,
+    palette: canvas.getPalette(),
+    steps,
+    truncated
   }
 }

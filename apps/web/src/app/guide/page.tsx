@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Code from '@/components/Code'
 import {
   DOCS_ADDITIONAL_NOTES,
   DOCS_REFERENCE_ROWS,
@@ -87,7 +88,7 @@ export default function GuidePage() {
             front. The source stays readable, diffable, and reversible.
           </p>
         </div>
-        <pre><code>{STARTER}</code></pre>
+        <Code source={STARTER} />
       </section>
 
       <section className="guide-section">
@@ -98,7 +99,7 @@ export default function GuidePage() {
             <article className="recipe-card" key={recipe.title}>
               <h3>{recipe.title}</h3>
               <p>{recipe.text}</p>
-              <pre><code>{recipe.code}</code></pre>
+              <Code source={recipe.code} />
             </article>
           ))}
         </div>

@@ -6,6 +6,7 @@ import { renderToRgba, type BrowserRenderResult } from '@pixelplace/pixelcraft/b
 import { downloadGif, downloadPng, downloadSource, paintToCanvas } from '@/lib/render-client'
 import { createStudioTools, type ActivityEntry } from '@/lib/studio-tools'
 import { isWebMcpAvailable, registerTools, type RegistrationStatus } from '@/lib/webmcp'
+import { highlight } from '@/lib/highlight'
 import { loadExampleSource } from '@/lib/gallery'
 
 const STARTER = `canvas 24x24
@@ -75,6 +76,7 @@ export default function Studio() {
   const [future, setFuture] = useState<SourceHistoryEntry[]>([])
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const highlightRef = useRef<HTMLPreElement>(null)
   const activityId = useRef(0)
   const manualBatchActive = useRef(false)
   const manualBatchTimer = useRef<number | null>(null)
@@ -318,6 +320,9 @@ export default function Studio() {
   // and the program changes as it is written.
   const tint = useMemo(() => (render.ok ? accentFrom(render.palette) : null), [render])
 
+  // Highlighted twin of the textarea's contents, painted behind it.
+  const highlighted = useMemo(() => highlight(ready ? source : ''), [source, ready])
+
   const errors = render.errors
   const warnings = render.warnings
 
@@ -355,14 +360,54 @@ export default function Studio() {
             </div>
           </div>
         </div>
-        <textarea
-          className="source"
-          value={ready ? source : ''}
-          readOnly={!ready}
-          spellCheck={false}
-          onChange={(event) => editSourceByHand(event.target.value)}
-          aria-label="PixelCraft source"
-        />
+        {/*
+          The editor is a transparent textarea sitting exactly on top of a highlighted
+          copy of its own text. The textarea keeps every native behaviour — caret,
+          selection, undo, IME, spellcheck off — and only its text is invisible; the
+          colour underneath is the compiler's lexer.
+
+          The two layers must agree on font, size, line height, padding and wrapping to
+          the pixel, so those live in one CSS rule shared by both. Scroll is mirrored,
+          since only the textarea actually scrolls.
+        */}
+        <div className="source-stack">
+          <pre className="source source-ghost" ref={highlightRef} aria-hidden="true">
+            <code>
+              {highlighted.map((spans, index) => (
+                <span key={index}>
+                  {spans.map((span, i) =>
+                    span.kind === 'color' ? (
+                      <span key={i} className="tok-color" style={{ color: span.swatch }}>
+                        {span.text}
+                      </span>
+                    ) : span.kind === 'plain' ? (
+                      <span key={i}>{span.text}</span>
+                    ) : (
+                      <span key={i} className={`tok-${span.kind}`}>
+                        {span.text}
+                      </span>
+                    )
+                  )}
+                  {'\n'}
+                </span>
+              ))}
+            </code>
+          </pre>
+          <textarea
+            className="source source-input"
+            value={ready ? source : ''}
+            readOnly={!ready}
+            spellCheck={false}
+            onChange={(event) => editSourceByHand(event.target.value)}
+            onScroll={(event) => {
+              const ghost = highlightRef.current
+              if (!ghost) return
+              ghost.scrollTop = event.currentTarget.scrollTop
+              ghost.scrollLeft = event.currentTarget.scrollLeft
+            }}
+            aria-label="PixelCraft source"
+          />
+        </div>
         <div className="diagnostics">
           {errors.map((e, i) => (
             <p key={`e${i}`} className="diag error">
