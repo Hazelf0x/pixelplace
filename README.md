@@ -13,6 +13,34 @@ exactly eight frames that line up. Correctness by compilation, not by luck.
 
 PixelPlace exposes that compiler to your agent over **[WebMCP](https://webmachinelearning.github.io/webmcp/)**.
 
+## What is new, and what came before
+
+PixelPlace is a pre-existing project that was rebuilt as an agent-native app during
+the WebMCP Challenge submission period. The boundary is exact and visible in the
+commit history:
+
+| | |
+|---|---|
+| **Prior work** | Everything up to `57f6f8b` (19 Aug 2026). The PixelCraft compiler, interpreter and renderer; the stdio MCP server; the 58-program gallery. |
+| **Submission-period work** | Everything from `06124af` onward (26 Aug 2026, 13:54 UTC) — after the period opened on 25 Aug 2026, 18:00 UTC. |
+
+Every line of WebMCP code in this repository was written inside the submission
+period. `git log --date=iso-strict 06124af~1..HEAD` shows the timestamps.
+
+What was added in that window:
+
+- The entire WebMCP tool surface — nine tools, in [`src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts) and [`src/lib/webmcp.ts`](apps/web/src/lib/webmcp.ts).
+- A rebuild from a server-rendered app with an API key into a fully client-side,
+  stateless one, so an agent-driven page needs no account, no key and no backend.
+- `renderReplayToRgba` and a browser export of the compiler's lexer, which the front
+  page uses to replay a real program and to highlight PixelCraft with the same code
+  that parses it.
+- The interface itself, redrawn to obey the constraints the format enforces.
+
+The compiler being *older* than the challenge is the point rather than a caveat: the
+interesting question was never whether a language could be written, but what an agent
+could do if it were handed one.
+
 ## The division of labour
 
 WebMCP tool results must be JSON, so a tool **cannot return an image**. That constraint
@@ -42,8 +70,23 @@ where it meant, and honest about being nothing more:
 
 ## The tools
 
-Registered with `navigator.modelContext.registerTool` in
-[`apps/web/src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts).
+Every tool is registered through the imperative WebMCP API:
+
+```js
+document.modelContext.registerTool({
+  name: 'check_program',
+  description: 'Compile a draft without touching the canvas.',
+  inputSchema: { /* JSON Schema */ },
+  execute: async (input) => { /* returns JSON */ }
+})
+```
+
+The nine tools are defined in
+[`apps/web/src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts) and registered
+by [`apps/web/src/lib/webmcp.ts`](apps/web/src/lib/webmcp.ts), which resolves the host
+object at runtime: Chrome 151 exposes the very same object on `navigator.modelContext`
+and `document.modelContext`, so both are feature-detected and either will do. With
+neither present nothing registers and the page is an ordinary pixel editor.
 
 | Tool | Does |
 |---|---|
