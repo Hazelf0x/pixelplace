@@ -57,9 +57,15 @@ export default function Studio() {
   // tracks the source with no debounce and no request.
   const render: BrowserRenderResult = useMemo(() => renderToRgba(source, { frame }), [source, frame])
 
+  // `ready` belongs in the deps, not just `render`. The canvas is not mounted during
+  // the first pass — the stage shows a loading line until the opening program is
+  // settled — so this effect runs once against a null ref. A visitor whose program
+  // then comes from the starter (no autosave, no ?example=) never changes `render`
+  // afterwards, so without `ready` the paint would never be retried and they would
+  // sit looking at an empty canvas.
   useEffect(() => {
     if (canvasRef.current && render.ok) paintToCanvas(canvasRef.current, render)
-  }, [render])
+  }, [render, ready])
 
   // The stage's usable content box, so the art can be scaled to fit it exactly.
   // Measured directly rather than through a ResizeObserver: observer callbacks are
