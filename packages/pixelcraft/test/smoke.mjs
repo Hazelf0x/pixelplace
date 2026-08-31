@@ -10,6 +10,7 @@ import {
   renderSpriteSheet,
   validateSource
 } from '../dist/index.mjs'
+import { renderSpriteSheetToRgba } from '../dist/browser.mjs'
 import { writeFileSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { fileURLToPath } from 'node:url'
@@ -188,6 +189,27 @@ const stillSheet = renderSpriteSheet(face, { scale: 1 })
 ok(
   stillSheet.ok && stillSheet.frameCount === 1 && stillSheet.columns === 1,
   'still program yields a single-cell sheet'
+)
+
+// The browser entry stops at RGBA so the page can use its native PNG encoder,
+// but its grid and metadata must match the Node exporter exactly.
+const browserSheet = renderSpriteSheetToRgba(anim, { scale: 1, columns: 3 })
+ok(browserSheet.ok, 'browser sprite sheet renders to RGBA')
+ok(
+  browserSheet.width === 24 && browserSheet.height === 24,
+  `browser sheet is the exact 3x3 grid (got ${browserSheet.width}x${browserSheet.height})`
+)
+ok(
+  browserSheet.frameWidth === 8 && browserSheet.frameHeight === 8 && browserSheet.frameCount === 8,
+  'browser sheet reports exact slicing metadata'
+)
+const secondFrameDot = (4 * browserSheet.width + 9) * 4
+ok(
+  browserSheet.rgba[secondFrameDot] === 0xff &&
+    browserSheet.rgba[secondFrameDot + 1] === 0xcd &&
+    browserSheet.rgba[secondFrameDot + 2] === 0x75 &&
+    browserSheet.rgba[secondFrameDot + 3] === 0xff,
+  'browser sheet places frame pixels in the correct cell'
 )
 
 // 8) Used-color extraction judges pixels, not declarations — the basis of the

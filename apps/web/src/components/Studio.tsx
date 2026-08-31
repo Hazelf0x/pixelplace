@@ -1,9 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import { renderToRgba, type BrowserRenderResult } from '@pixelplace/pixelcraft/browser'
-import { downloadGif, downloadPng, downloadSource, paintToCanvas } from '@/lib/render-client'
+import {
+  downloadGif,
+  downloadPng,
+  downloadSource,
+  downloadSpriteSheet,
+  paintToCanvas,
+  type ArtworkExportFormat,
+  type ArtworkExportResult
+} from '@/lib/render-client'
 import { createStudioTools, type ActivityEntry } from '@/lib/studio-tools'
 import { isWebMcpAvailable, registerTools, type RegistrationStatus } from '@/lib/webmcp'
 import { highlight } from '@/lib/highlight'
@@ -22,6 +30,7 @@ px 4,17 moon
 `
 
 const AUTOSAVE_KEY = 'pixelplace.studio.source'
+const MAX_SOURCE_LENGTH = 60_000
 
 /**
  * The most useful accent in a program's own palette — used to tint the Studio's
@@ -71,12 +80,13 @@ export default function Studio() {
   const [playing, setPlaying] = useState(false)
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [mcp, setMcp] = useState<RegistrationStatus>({ state: 'unsupported' })
-  const [flash, setFlash] = useState<string | null>(null)
+  const [flash, setFlash] = useState<{ message: string; ok: boolean } | null>(null)
   const [past, setPast] = useState<SourceHistoryEntry[]>([])
   const [future, setFuture] = useState<SourceHistoryEntry[]>([])
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const highlightRef = useRef<HTMLPreElement>(null)
+  const sourceFileRef = useRef<HTMLInputElement>(null)
   const activityId = useRef(0)
   const manualBatchActive = useRef(false)
   const manualBatchTimer = useRef<number | null>(null)
@@ -277,13 +287,51 @@ export default function Studio() {
   const undoAction = past[past.length - 1]?.action
   const redoAction = future[future.length - 1]?.action
 
+  /** Open a saved PixelCraft document only after proving it can render. */
+  const importSourceFile = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const input = event.currentTarget
+      const file = input.files?.[0]
+      input.value = ''
+      if (!file) return
+
+      try {
+        if (file.size > MAX_SOURCE_LENGTH) {
+          throw new Error(`Not opened — ${file.name} is larger than ${MAX_SOURCE_LENGTH.toLocaleString()} bytes.`)
+        }
+        const next = await file.text()
+        if (next.length === 0) throw new Error(`Not opened — ${file.name} is empty.`)
+        if (next.length > MAX_SOURCE_LENGTH) {
+          throw new Error(`Not opened — ${file.name} exceeds ${MAX_SOURCE_LENGTH.toLocaleString()} characters.`)
+        }
+
+        const checked = renderToRgba(next)
+        if (!checked.ok) {
+          const first = checked.errors[0]
+          const where = first?.line ? ` at line ${first.line}` : ''
+          throw new Error(`Not opened — ${first?.code ?? 'invalid source'}${where}: ${first?.message ?? 'the program does not compile.'}`)
+        }
+
+        applySource(next, 'File import')
+        setFrame(0)
+        setPlaying(checked.hasAnimation)
+        setFlash({ message: `Opened ${file.name}`, ok: true })
+      } catch (error) {
+        setFlash({ message: error instanceof Error ? error.message : String(error), ok: false })
+      }
+      window.setTimeout(() => setFlash(null), 4200)
+    },
+    [applySource]
+  )
+
   const exportArtwork = useCallback(
-    async (format: 'png' | 'gif' | 'source', scale: number): Promise<string> => {
+    async (format: ArtworkExportFormat, scale: number): Promise<ArtworkExportResult> => {
       const current = live.current.source
       const name = 'pixelplace'
-      if (format === 'source') return downloadSource(current, name)
-      if (format === 'gif') return downloadGif(current, scale, 12, name)
-      return downloadPng(current, scale, live.current.frame, name)
+      if (format === 'source') return { format, filename: downloadSource(current, name) }
+      if (format === 'gif') return { format, filename: downloadGif(current, scale, 12, name) }
+      if (format === 'spritesheet') return downloadSpriteSheet(current, scale, name)
+      return { format, filename: await downloadPng(current, scale, live.current.frame, name) }
     },
     []
   )
@@ -306,12 +354,12 @@ export default function Studio() {
     return () => controller.abort()
   }, [applySource, exportArtwork, log])
 
-  const runExport = async (format: 'png' | 'gif' | 'source') => {
+  const runExport = async (format: ArtworkExportFormat) => {
     try {
-      const filename = await exportArtwork(format, 8)
-      setFlash(`Saved ${filename}`)
+      const result = await exportArtwork(format, format === 'spritesheet' ? 1 : 8)
+      setFlash({ message: `Saved ${result.filename}`, ok: true })
     } catch (error) {
-      setFlash(error instanceof Error ? error.message : String(error))
+      setFlash({ message: error instanceof Error ? error.message : String(error), ok: false })
     }
     window.setTimeout(() => setFlash(null), 3200)
   }
@@ -354,6 +402,17 @@ export default function Studio() {
               >
                 Redo
               </button>
+              <button className="btn small ghost" onClick={() => sourceFileRef.current?.click()}>
+                Open .pc
+              </button>
+              <input
+                ref={sourceFileRef}
+                type="file"
+                accept=".pc,text/plain"
+                hidden
+                onChange={importSourceFile}
+                aria-label="Open PixelCraft source file"
+              />
               <Link href="/guide" className="btn small ghost">
                 Guide
               </Link>
@@ -490,10 +549,18 @@ export default function Studio() {
           <button className="btn small" onClick={() => runExport('gif')} disabled={!render.hasAnimation}>
             GIF
           </button>
+          <button
+            className="btn small"
+            onClick={() => runExport('spritesheet')}
+            disabled={!render.hasAnimation}
+            title="Export every frame as a native-resolution PNG grid"
+          >
+            Sprite sheet
+          </button>
           <button className="btn small" onClick={() => runExport('source')}>
             .pc source
           </button>
-          {flash && <span className="flash">{flash}</span>}
+          {flash && <span className={`flash${flash.ok ? '' : ' error'}`}>{flash.message}</span>}
         </div>
       </section>
 

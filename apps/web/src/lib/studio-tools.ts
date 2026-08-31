@@ -19,7 +19,11 @@ import {
   renderToRgba,
   validateSource
 } from '@pixelplace/pixelcraft/browser'
-import { describeRender } from './render-client'
+import {
+  describeRender,
+  type ArtworkExportFormat,
+  type ArtworkExportResult
+} from './render-client'
 import { fail, ok, type WebMcpTool } from './webmcp'
 import { GALLERY, findEntry, loadExampleSource } from './gallery'
 
@@ -30,7 +34,7 @@ export interface StudioApi {
   getFrame: () => number
   setFrame: (frame: number) => void
   setPlaying: (playing: boolean) => void
-  exportArtwork: (format: 'png' | 'gif' | 'source', scale: number) => Promise<string>
+  exportArtwork: (format: ArtworkExportFormat, scale: number) => Promise<ArtworkExportResult>
 }
 
 /** One line in the activity feed the human watches while an agent works. */
@@ -329,28 +333,31 @@ export function createStudioTools(api: StudioApi, log: (tool: string, detail: st
       name: 'export_artwork',
       description:
         'Save the current artwork to the person\'s device: "png" for a still image, "gif" ' +
-        'for an animated loop, or "source" for the .pc program itself — the only format that ' +
-        'round-trips back into the editor. The browser starts the download; you get back the ' +
-        'filename.',
+        'for an animated loop, "spritesheet" for an exact PNG frame grid a game engine can ' +
+        'slice, or "source" for the .pc program itself — the editable format that can be opened ' +
+        'again in the Studio. The browser starts the download and returns its metadata.',
       inputSchema: {
         type: 'object',
         properties: {
-          format: { type: 'string', enum: ['png', 'gif', 'source'] },
+          format: { type: 'string', enum: ['png', 'gif', 'spritesheet', 'source'] },
           scale: {
             type: 'integer',
             minimum: 1,
             maximum: 16,
-            description: 'Integer upscale for png/gif. Default 8, since pixel art is small.'
+            description:
+              'Integer upscale for png/gif/spritesheet. Defaults to native 1x for spritesheets ' +
+              'and 8x for display-oriented PNG/GIF exports.'
           }
         },
         required: ['format']
       },
       execute: async (input: never) => {
-        const { format, scale } = input as { format: 'png' | 'gif' | 'source'; scale?: number }
+        const { format, scale } = input as { format: ArtworkExportFormat; scale?: number }
         try {
-          const filename = await api.exportArtwork(format, Math.max(1, Math.min(16, scale ?? 8)))
-          note('export_artwork', `exported ${filename}`)
-          return ok({ filename, message: 'The download has started in the browser.' })
+          const defaultScale = format === 'spritesheet' ? 1 : 8
+          const result = await api.exportArtwork(format, Math.max(1, Math.min(16, scale ?? defaultScale)))
+          note('export_artwork', `exported ${result.filename}`)
+          return ok({ ...result, message: 'The download has started in the browser.' })
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
           note('export_artwork', `export failed — ${message}`, false)

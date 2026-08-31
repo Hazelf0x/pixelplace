@@ -84,6 +84,7 @@ export default function AboutPage() {
         <li>It compile-checks the PixelCraft program before applying it to the canvas.</li>
         <li>You judge the visible result and describe a revision in ordinary language.</li>
         <li>Undo a revision at any time—or change one line yourself and ask the agent to continue.</li>
+        <li>Export a still, loop, sprite sheet, or source file you can safely reopen later.</li>
       </ol>
       <p>
         That last step is genuine co-editing: <code>get_program</code> reads the current Studio
@@ -99,14 +100,18 @@ export default function AboutPage() {
         editor with no agent attached.
       </p>
       <p>
-        Exports are local too — PNG through the browser&apos;s own encoder, GIF through a
-        pure-JS encoder, and <code>.pc</code> source, which is the only format that
-        round-trips back into the editor. Because the program <em>is</em> the document, a
-        drawing is a string: small enough to paste in chat, diff in git, or hand back to an
-        agent to edit.
+        Exports are local too — PNG and sprite-sheet PNG through the browser&apos;s own encoder,
+        GIF through a pure-JS encoder, and <code>.pc</code> source, which the Studio validates
+        before reopening. Because the program <em>is</em> the document, a drawing is a string:
+        small enough to paste in chat, diff in git, or hand back to an agent to edit.
       </p>
 
       <h2>The tools</h2>
+      <p>
+        An agent arriving on the gallery first sees <code>open_pixelplace_studio</code>, an
+        explicit doorway into the stateful workspace. Once the Studio opens, its focused editing
+        toolset replaces that landing-page tool:
+      </p>
       <ul>
         <li>
           <code>get_pixelcraft_guide</code> — the language, generated from the compiler&apos;s
@@ -133,7 +138,7 @@ export default function AboutPage() {
           study or remix
         </li>
         <li>
-          <code>export_artwork</code> — save a PNG, GIF, or the source
+          <code>export_artwork</code> — save a PNG, GIF, exact sprite sheet, or the source
         </li>
       </ul>
 

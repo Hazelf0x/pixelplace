@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import Link from 'next/link'
 import { GALLERY, allTags, previewGif, previewPng } from '@/lib/gallery'
 import LivingHero from '@/components/LivingHero'
+import LandingWebMcp from '@/components/LandingWebMcp'
 
 /** The piece the front page replays. Chosen for having a lot of visible construction. */
 const HERO_SLUG = 'fable_ink_sea_v2'
@@ -22,6 +23,7 @@ export default async function GalleryPage() {
 
   return (
     <main className="container">
+      <LandingWebMcp />
       <section className="hero">
         <div className="eyebrow">Pixel art that is source code</div>
         <h1>
@@ -42,8 +44,8 @@ export default async function GalleryPage() {
           an exact canvas with a locked palette and frames that line up.
         </p>
         <p>
-          This page hands your agent real tools through <strong>WebMCP</strong>. It writes the
-          program; you watch the canvas and say what to change.
+          This page hands your agent a <strong>WebMCP</strong> doorway into the Studio. There it
+          writes the program; you watch the canvas and say what to change.
         </p>
         <p>
           Built for indie game makers, pixel artists, and small teams who want AI speed without

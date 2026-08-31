@@ -5,9 +5,26 @@
 import {
   measureCoverage,
   renderGif,
+  renderSpriteSheetToRgba,
   renderToRgba,
   type BrowserRenderResult
 } from '@pixelplace/pixelcraft/browser'
+
+export type ArtworkExportFormat = 'png' | 'gif' | 'spritesheet' | 'source'
+
+export interface ArtworkExportResult {
+  format: ArtworkExportFormat
+  filename: string
+  spriteSheet?: {
+    frameWidth: number
+    frameHeight: number
+    frameCount: number
+    columns: number
+    rows: number
+    width: number
+    height: number
+  }
+}
 
 /** Paint an engine RGBA buffer into a real canvas, unsmoothed so pixels stay pixels. */
 export function paintToCanvas(canvas: HTMLCanvasElement, result: BrowserRenderResult): void {
@@ -56,6 +73,44 @@ export function downloadGif(source: string, scale: number, fps: number, name: st
   const filename = `${name}-${result.frameCount}f.gif`
   triggerDownload(new Blob([result.gif as BlobPart], { type: 'image/gif' }), filename)
   return filename
+}
+
+/** Save every animation frame in a uniform PNG grid a game engine can slice exactly. */
+export async function downloadSpriteSheet(
+  source: string,
+  scale: number,
+  name: string
+): Promise<ArtworkExportResult> {
+  const result = renderSpriteSheetToRgba(source, { scale })
+  if (!result.ok) throw new Error(result.errors.map((e) => `${e.code} ${e.message}`).join('; '))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = result.width
+  canvas.height = result.height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('The browser could not create a sprite-sheet canvas.')
+  ctx.imageSmoothingEnabled = false
+  ctx.putImageData(new ImageData(new Uint8ClampedArray(result.rgba), result.width, result.height), 0, 0)
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+  if (!blob) throw new Error('The browser could not encode the sprite sheet.')
+
+  const grid = result.rows > 1 ? `-${result.columns}x${result.rows}` : ''
+  const filename = `${name}-${result.frameWidth}x${result.frameHeight}-${result.frameCount}f${grid}-sheet.png`
+  triggerDownload(blob, filename)
+  return {
+    format: 'spritesheet',
+    filename,
+    spriteSheet: {
+      frameWidth: result.frameWidth,
+      frameHeight: result.frameHeight,
+      frameCount: result.frameCount,
+      columns: result.columns,
+      rows: result.rows,
+      width: result.width,
+      height: result.height
+    }
+  }
 }
 
 /** Save the source itself — the only export that round-trips back into the editor. */

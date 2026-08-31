@@ -29,7 +29,10 @@ period. `git log --date=iso-strict 06124af~1..HEAD` shows the timestamps.
 
 What was added in that window:
 
-- The entire WebMCP tool surface — nine tools, in [`src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts) and [`src/lib/webmcp.ts`](apps/web/src/lib/webmcp.ts).
+- The entire WebMCP tool surface — nine Studio tools plus the landing-page doorway, in
+  [`src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts),
+  [`src/components/LandingWebMcp.tsx`](apps/web/src/components/LandingWebMcp.tsx), and
+  [`src/lib/webmcp.ts`](apps/web/src/lib/webmcp.ts).
 - A rebuild from a server-rendered app with an API key into a fully client-side,
   stateless one, so an agent-driven page needs no account, no key and no backend.
 - `renderReplayToRgba` and a browser export of the compiler's lexer, which the front
@@ -81,8 +84,8 @@ document.modelContext.registerTool({
 })
 ```
 
-The nine tools are defined in
-[`apps/web/src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts) and registered
+The landing page registers one doorway tool, and the nine stateful Studio tools are defined in
+[`apps/web/src/lib/studio-tools.ts`](apps/web/src/lib/studio-tools.ts). All are registered
 by [`apps/web/src/lib/webmcp.ts`](apps/web/src/lib/webmcp.ts), which resolves the host
 object at runtime: Chrome 151 exposes the very same object on `navigator.modelContext`
 and `document.modelContext`, so both are feature-detected and either will do. With
@@ -90,6 +93,7 @@ neither present nothing registers and the page is an ordinary pixel editor.
 
 | Tool | Does |
 |---|---|
+| `open_pixelplace_studio` | Give an agent arriving on the gallery an explicit path into the stateful workspace |
 | `get_pixelcraft_guide` | The language, generated from the compiler's own docs so it cannot drift |
 | `check_program` | Compile a draft *without* touching the canvas — diagnostics with line numbers, declared palette vs colors actually **painted**, coverage. The cheap refine loop |
 | `set_program` | Put it on the canvas. Rejected unless it compiles, so the canvas never holds a broken program |
@@ -97,7 +101,7 @@ neither present nothing registers and the page is an ordinary pixel editor.
 | `describe_canvas` | The text map above, plus bounds, legend and coverage |
 | `set_frame` | Pause an animation on one moment |
 | `list_examples` / `load_example` | 58 finished programs to study or remix |
-| `export_artwork` | Save a PNG, a GIF, or the `.pc` source |
+| `export_artwork` | Save a PNG, GIF, game-ready sprite-sheet PNG, or `.pc` source |
 
 Every tool call appears in an activity feed on the page, so the person can watch the agent work.
 
@@ -111,6 +115,8 @@ speed without surrendering exact pixels or authorship. A normal session is inten
 3. The person judges the real canvas and directs the next revision in natural language.
 4. Either collaborator can edit the same source. The person can undo any revision; the agent
    calls `get_program` to continue from hand edits rather than a stale private copy.
+5. The finished work exports as a still, loop, exact frame grid, or editable document; saved
+   `.pc` files open back into the Studio as one safe, undoable revision.
 
 Nobody has to learn the language to create. The human-facing `/guide` is there for people who
 *want* direct control: changing a palette value, nudging a shape, or understanding what the agent
@@ -122,8 +128,8 @@ documentation table.
 The lexer, parser, compiler, interpreter and renderer are all client-side
 ([`@pixelplace/pixelcraft/browser`](packages/pixelcraft/src/browser.ts)). No API key, no
 account, no quota, no database, and no server ever sees what you draw. Exports are local too:
-PNG via the browser's own encoder, GIF via a pure-JS one, and `.pc` source — the only format
-that round-trips back into the editor.
+PNG and sprite-sheet PNG via the browser's own encoder, GIF via a pure-JS one, and `.pc`
+source — the editable format the Studio can validate and reopen.
 
 Because the program *is* the document, a drawing is a string: small enough to paste into a
 chat, diff in git, or hand back to an agent to edit.

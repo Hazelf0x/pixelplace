@@ -194,6 +194,114 @@ export function renderFramesToRgba(
   return { ok: true, errors: [], frames, width: size.width * scale, height: size.height * scale }
 }
 
+export interface BrowserSpriteSheetOptions {
+  /** Integer upscale applied to every frame. Defaults to native 1x pixels. */
+  scale?: number
+  /** Cells per row. Defaults to one horizontal strip, wrapping only for browser limits. */
+  columns?: number
+}
+
+export interface BrowserSpriteSheetResult {
+  ok: boolean
+  errors: Diagnostic[]
+  /** Straight RGBA for the complete sheet, ready for ImageData. */
+  rgba: Uint8Array
+  width: number
+  height: number
+  /** Cell dimensions after scaling — what a game-engine importer slices by. */
+  frameWidth: number
+  frameHeight: number
+  frameCount: number
+  columns: number
+  rows: number
+}
+
+// Stay below Chromium's per-axis canvas ceiling and avoid allocating an enormous
+// browser tab. A native 256x256 animation can still export all 240 allowed frames.
+const MAX_BROWSER_SHEET_DIMENSION = 16_384
+const MAX_BROWSER_SHEET_PIXELS = 16_777_216
+
+/** Tile every frame into one exact RGBA grid for client-side PNG encoding. */
+export function renderSpriteSheetToRgba(
+  source: string,
+  opts: BrowserSpriteSheetOptions = {}
+): BrowserSpriteSheetResult {
+  const rendered = renderFramesToRgba(source, { scale: opts.scale })
+  const empty = {
+    rgba: new Uint8Array(0),
+    width: 0,
+    height: 0,
+    frameWidth: 0,
+    frameHeight: 0,
+    frameCount: 0,
+    columns: 0,
+    rows: 0
+  }
+  if (!rendered.ok || rendered.frames.length === 0) {
+    return { ok: false, errors: rendered.errors, ...empty }
+  }
+
+  const frameWidth = rendered.width
+  const frameHeight = rendered.height
+  const frameCount = rendered.frames.length
+  if (frameWidth > MAX_BROWSER_SHEET_DIMENSION || frameHeight > MAX_BROWSER_SHEET_DIMENSION) {
+    return {
+      ok: false,
+      errors: [{
+        code: 'EXPORT_SIZE',
+        line: 0,
+        column: 0,
+        message: 'A scaled frame is too large for a browser sprite sheet. Export at a smaller scale.'
+      }],
+      ...empty
+    }
+  }
+
+  const maxColumns = Math.max(1, Math.floor(MAX_BROWSER_SHEET_DIMENSION / frameWidth))
+  const requestedColumns = Math.floor(opts.columns ?? frameCount)
+  const columns = Math.max(1, Math.min(frameCount, maxColumns, requestedColumns))
+  const rows = Math.ceil(frameCount / columns)
+  const width = frameWidth * columns
+  const height = frameHeight * rows
+
+  if (height > MAX_BROWSER_SHEET_DIMENSION || width * height > MAX_BROWSER_SHEET_PIXELS) {
+    return {
+      ok: false,
+      errors: [{
+        code: 'EXPORT_SIZE',
+        line: 0,
+        column: 0,
+        message: 'This sprite sheet is too large for a browser canvas. Export at native scale or use fewer frames.'
+      }],
+      ...empty
+    }
+  }
+
+  const rgba = new Uint8Array(width * height * 4)
+  rendered.frames.forEach((cell, index) => {
+    const originX = (index % columns) * frameWidth
+    const originY = Math.floor(index / columns) * frameHeight
+    for (let y = 0; y < frameHeight; y++) {
+      const from = y * frameWidth * 4
+      const to = ((originY + y) * width + originX) * 4
+      rgba.set(cell.subarray(from, from + frameWidth * 4), to)
+    }
+  })
+
+  return {
+    ok: true,
+    errors: [],
+    rgba,
+    width,
+    height,
+    frameWidth,
+    frameHeight,
+    frameCount,
+    columns,
+    rows
+  }
+}
+
 const toHex8 = (r: number, g: number, b: number, a: number): string =>
   `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}` +
   `${b.toString(16).padStart(2, '0')}${a.toString(16).padStart(2, '0')}`
